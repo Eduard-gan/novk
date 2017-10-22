@@ -89,6 +89,6 @@ STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 MEDIA_URL = '/static/uploaded/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'static/uploaded')
+MEDIA_ROOT = os.path.join(STATIC_ROOT, 'uploaded')
 
 INTERNAL_IPS = ('127.0.0.1')
