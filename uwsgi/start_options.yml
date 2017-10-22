@@ -1,0 +1,12 @@
+uwsgi:
+    pidfile: /var/run/uwsgi.pid
+    chdir: /var/www/env/novk
+    module: novk.wsgi:application
+    env: DJANGO_SETTINGS_MODULE=novk.settings
+    master: 1
+    socket: 127.0.0.1:8000
+    vacuum: 1
+    daemonize: /var/log/uwsgi/novk.log
+    uid: www-data
+    gid: www-data
+    py-autoreload: 3

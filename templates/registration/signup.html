@@ -1,0 +1,15 @@
+{% extends "Base.html" %}
+{% block content %}
+
+    <div class="page-header" align="center">
+      <h1><strong>NO VK</strong></h1>
+      .tk
+    </div>
+
+{% load bootstrap3 %}
+<form action="" method="post" class="form">
+	{% csrf_token %}
+	{% bootstrap_form form show_label=False %}
+    {% buttons %}{% bootstrap_button "Зарегистрироваться" button_class="btn-primary" button_type="submit" %}{% endbuttons %}
+</form>
+{% endblock %}
