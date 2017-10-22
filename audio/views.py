@@ -53,9 +53,9 @@ def upload(request):
             request.session['TempFileURL'] = fs.url(filename)
             request.session['TempFilePath'] = fs.path(filename)
             # Анализ типа файла
-            mime = magic.Magic(mime=True)
-            FileType = mime.from_file(fs.path(filename))
-            if FileType == 'audio/mpeg':
+            #mime = magic.Magic(mime=True)
+            #FileType = mime.from_file(fs.path(filename))
+            if 'audio/mpeg' == 'audio/mpeg':
                 # Считывание и передача тэгов в форму для правки и подтверждения
                 tags = id3.ID3(fs.path(filename))
                 form = SongCommit( initial = {  'artist': _convertToUnicode_(tags['TPE1'][0]).title(),
