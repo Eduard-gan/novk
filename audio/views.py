@@ -1,6 +1,5 @@
 from django.shortcuts import render
 from django.http import HttpResponse
-from .models import Song 
 from .forms import *
 from django.core.files.storage import FileSystemStorage
 from mutagen import id3
@@ -10,34 +9,32 @@ import os
 from django.contrib.auth.decorators import login_required
 import magic
 from django.core.files import File
-import datetime
 
-def _getRandomName_():
-    return "".join([random.choice(list('123456789qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM')) for x in range(12)])
 
-def _convertToUnicode_(PossibleCP1251String):
-    convertedUnicodeString = ''
-    for letter in PossibleCP1251String:
+def get_random_name():
+    return "".join(
+        [random.choice(list('123456789qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM')) for x in range(12)])
+
+
+def convert_to_unicode(possible_cp1251_string):
+    converted_unicode_string = ''
+    for letter in possible_cp1251_string:
         temp = letter.encode('raw_unicode_escape')
-        testnumber = int.from_bytes(temp,'big')
-        if testnumber > 127 and testnumber < 256:
-            convertedUnicodeString += ((temp.decode('cp1251')).encode('UTF-8')).decode()
+        testnumber = int.from_bytes(temp, 'big')
+        if testnumber > 127 < 256:
+            converted_unicode_string += ((temp.decode('cp1251')).encode('UTF-8')).decode()
         else:
-            return(PossibleCP1251String)
-    return(convertedUnicodeString)
-
-
-
-
-
+            return possible_cp1251_string
+    return converted_unicode_string
 
 
 @login_required
 def music(request):
     songs = Song.objects.all().values()
     context = {}
-    context.update({'songs':songs})
-    return render(request,'music.html',context)
+    context.update({'songs': songs})
+    return render(request, 'music.html', context)
+
 
 def upload(request):
     if request.method == 'GET':
@@ -46,28 +43,29 @@ def upload(request):
     if request.method == 'POST':
         if request.FILES.get('file'):
             # Сохранение файла во временной папке и отдача в сессию сведений о временном файле
-            fs = FileSystemStorage( location=settings.MEDIA_ROOT + '/temp/' , 
-                                    base_url=settings.MEDIA_URL + 'temp/')
-            filename = fs.save(_getRandomName_(), request.FILES['file'])
+            fs = FileSystemStorage(location=settings.MEDIA_ROOT + '/temp/',
+                                   base_url=settings.MEDIA_URL + 'temp/')
+            filename = fs.save(get_random_name(), request.FILES['file'])
             request.session['TempFileName'] = filename
             request.session['TempFileURL'] = fs.url(filename)
             request.session['TempFilePath'] = fs.path(filename)
             # Анализ типа файла
             mime = magic.Magic(mime=True)
-            FileType = mime.from_file(fs.path(filename))
-            if FileType == 'audio/mpeg':
+            filetype = mime.from_file(fs.path(filename))
+            if filetype == 'audio/mpeg':
                 # Считывание и передача тэгов в форму для правки и подтверждения
                 tags = id3.ID3(fs.path(filename))
-                form = SongCommit( initial = {  'artist': _convertToUnicode_(tags['TPE1'][0]).title(),
-                                                'title': _convertToUnicode_(tags['TIT2'][0]).title(),
-                                                'album': _convertToUnicode_(tags['TALB'][0]).title(),
-                                                'year': tags['TDRC'][0],
-                                                'track': tags['TRCK'][0]}
+                form = SongCommit(initial={'artist': convert_to_unicode(tags['TPE1'][0]).title(),
+                                           'title': convert_to_unicode(tags['TIT2'][0]).title(),
+                                           'album': convert_to_unicode(tags['TALB'][0]).title(),
+                                           'year': tags['TDRC'][0],
+                                           'track': tags['TRCK'][0]}
                                   )
             else:
-                return HttpResponse('No processing code for mime type {}'.format(FileType))
-            return render(request, 'upload.html', {'form': form , 'uploaded_file_url': request.session.get('TempFileURL')} )
-        elif request.FILES.get('file') == None:
+                return HttpResponse('No processing code for mime type {}'.format(filetype))
+            return render(request, 'upload.html',
+                          {'form': form, 'uploaded_file_url': request.session.get('TempFileURL')})
+        elif request.FILES.get('file') is None:
             # Связываем принятые данные с новой формой для валидации
             form = SongCommit(request.POST)
             if form.is_valid():
@@ -75,17 +73,17 @@ def upload(request):
                 # Обновление тэгов файла
                 tags = id3.ID3(request.session.get('TempFilePath'))
                 tags.update_to_v23()
-                tags.add(id3.TPE1(encoding=3 , text=form.cleaned_data['artist']))
-                tags.add(id3.TIT2(encoding=3 , text=form.cleaned_data['title']))
-                tags.add(id3.TALB(encoding=3 , text=form.cleaned_data['album']))
-                tags.add(id3.TDRC(encoding=3 , text=str(form.cleaned_data['album'])))
-                tags.add(id3.TRCK(encoding=3 , text=str(form.cleaned_data['track'])))
-                tags.add(id3.TCON(encoding=3 , text=str(form.cleaned_data['genre'])))
+                tags.add(id3.TPE1(encoding=3, text=form.cleaned_data['artist']))
+                tags.add(id3.TIT2(encoding=3, text=form.cleaned_data['title']))
+                tags.add(id3.TALB(encoding=3, text=form.cleaned_data['album']))
+                tags.add(id3.TDRC(encoding=3, text=str(form.cleaned_data['album'])))
+                tags.add(id3.TRCK(encoding=3, text=str(form.cleaned_data['track'])))
+                tags.add(id3.TCON(encoding=3, text=str(form.cleaned_data['genre'])))
                 tags.save()
             # Создание файлового объекта Джанго из временного файла для последующего крепления в модель.
             with open(request.session.get('TempFilePath'), 'rb') as TempFile:
-                DjangFileObject = File(TempFile)
-                model.file = DjangFileObject
+                django_file_object = File(TempFile)
+                model.file = django_file_object
                 model.file.name = request.session.get('TempFileName') + '.mp3'
                 model.artist = form.cleaned_data['artist']
                 model.title = form.cleaned_data['title']
@@ -97,4 +95,6 @@ def upload(request):
             # Удаление временного файла
             os.remove(request.session.get('TempFilePath'))
             return HttpResponse('<p>All Data Saved.</p>')
-    return HttpResponse("<p>No actions found in views.upload for request's HTTP-method {}   OR FORM IS NOT VALID(NO FALURE PROCESSING CODE YET WRITTEN)</p>".format(request.method))
+    return HttpResponse(
+        "<p>No actions found in views.upload for request's HTTP-method {}</p>".format(
+            request.method))
