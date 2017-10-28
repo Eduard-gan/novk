@@ -14,7 +14,7 @@ audio.pinned {
  width:100%;
  height:50px;
  position:fixed;
- top:0px;
+ top:0;
 }
 </style>
 
@@ -30,7 +30,7 @@ audio.pinned {
 <tbody>
 {% for song in songs %}
 <tr class="success">
-    <td class="Song" onclick="clickWrapper(this)" id="{{song.id}}">{{song.artist}} - {{song.title}}</td>
+    <td class="Song" onclick="clickWrapper(this)" data-path="{{song.file}}" id="{{song.id}}">{{song.artist}} - {{song.title}}</td>
 </tr>
 {% endfor %}
 </tbody>
@@ -63,16 +63,17 @@ function clickWrapper(ChosenSong) {
 		
 		// на onend нужно добавить полностью автономное рекурсивное событие давая ему только точку старта
 		Player.onended = function() { changeSong( Player , ChosenSong.id ) };
-	};
-};
+	}
+}
+
 
 function getSongPath( SongID ) {
 	var Song = document.getElementById(SongID);
-	var ReturningPath = Song.innerText;
-	ReturningPath = ReturningPath.replace( /^/ , "/static/Music/" );
-    ReturningPath = ReturningPath.replace( / - / , "/" );
-    return( ReturningPath.replace( /$/ , ".mp3") );
-};
+	var ReturningPath = Song.getAttribute("data-path");
+	ReturningPath = ReturningPath.replace( /^/ , "/static/uploaded/" );
+    return( ReturningPath );
+}
+
 
 function getNextSongID( SongID ) {
 	Playlist = document.getElementsByClassName("Song");
