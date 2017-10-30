@@ -9,6 +9,7 @@ import os
 from django.contrib.auth.decorators import login_required
 import magic
 from django.core.files import File
+from django.shortcuts import HttpResponseRedirect
 
 
 def get_random_name():
@@ -24,7 +25,7 @@ def convert_to_unicode(possible_cp1251_string):
         if testnumber > 127 < 256:
             converted_unicode_string += ((temp.decode('cp1251')).encode('UTF-8')).decode()
         else:
-            return possible_cp1251_string
+            converted_unicode_string += temp.decode()
     return converted_unicode_string
 
 
@@ -58,9 +59,9 @@ def upload(request):
                 # для передачи пользователю где он вносит правки и подтверждает.
                 try:
                     tags = id3.ID3(fs.path(filename))
-                    initial = {'artist': tags.get('TPE1', [''])[0].title(),
-                               'title': tags.get('TIT2', [''])[0].title(),
-                               'album': tags.get('TALB', [''])[0],
+                    initial = {'artist': convert_to_unicode(tags.get('TPE1', [''])[0]).title(),
+                               'title': convert_to_unicode(tags.get('TIT2', [''])[0]).title(),
+                               'album': convert_to_unicode(tags.get('TALB', [''])[0]),
                                'year': tags.get('TDRC', [''])[0],
                                'track': tags.get('TIT2', [''])[0],
                                'genre': '1'
@@ -103,7 +104,7 @@ def upload(request):
                 model.save()
             # Удаление временного файла
             os.remove(request.session.get('TempFilePath'))
-            return HttpResponse('<p>All Data Saved.</p>')
+            return HttpResponseRedirect('/music/')
     return HttpResponse(
         "<p>No actions found in views.upload for request's HTTP-method {}</p>".format(
             request.method))
