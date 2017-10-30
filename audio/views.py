@@ -49,41 +49,28 @@ def upload(request):
             request.session['TempFileName'] = filename
             request.session['TempFileURL'] = fs.url(filename)
             request.session['TempFilePath'] = fs.path(filename)
+
             # Анализ типа файла
             mime = magic.Magic(mime=True)
             filetype = mime.from_file(fs.path(filename))
             if filetype == 'audio/mpeg':
-                # Считывание и передача тэгов в форму для правки и подтверждения
+                # Попытка считывания и передача тэгов в форму
+                # для передачи пользователю где он вносит правки и подтверждает.
                 try:
                     tags = id3.ID3(fs.path(filename))
-                    initial = {}
-                    try:
-                        initial['artist'] = convert_to_unicode(tags['TPE1'][0]).title()
-                    except(KeyError):
-                        initial['artist'] = ''
-                    try:
-                        initial['title'] = convert_to_unicode(tags['TIT2'][0]).title()
-                    except(KeyError):
-                        initial['title'] = ''
-                    try:
-                        initial['album'] = convert_to_unicode(tags['TALB'][0]).title()
-                    except(KeyError):
-                        initial['album'] = ''
-                    try:
-                        initial['year'] = tags['TDRC'][0]
-                    except(KeyError):
-                        initial['year'] = ''
-                    try:
-                        initial['track'] = tags['TRCK'][0]
-                    except(KeyError):
-                        initial['track'] = ''
-                except(id3.ID3NoHeaderError):
+
+                    initial = {'artist': tags.get('TPE1', '')[0].title(),
+                               'title': tags.get('TIT2', '')[0].title(),
+                               'album': tags.get('TALB', '')[0],
+                               'year': tags.get('TDRC', '')[0],
+                               'track': tags.get('TIT2', '')[0],
+                               'genre': '1'
+                               }
+                    form = SongCommit(initial)
+                except id3.ID3NoHeaderError:
                     form = SongCommit()
                     return render(request, 'upload.html',
                                   {'form': form, 'uploaded_file_url': request.session.get('TempFileURL')})
-                #Выставление дефолтного жанра чтобы не агрить базу и людей.
-                initial['genre'] = str(1)
-                form = SongCommit(initial)
             else:
                 return HttpResponse('No processing code for mime type {}'.format(filetype))
             return render(request, 'upload.html',
