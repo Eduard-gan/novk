@@ -58,16 +58,15 @@ def upload(request):
                 # для передачи пользователю где он вносит правки и подтверждает.
                 try:
                     tags = id3.ID3(fs.path(filename))
-
-                    initial = {'artist': tags.get('TPE1', '')[0].title(),
-                               'title': tags.get('TIT2', '')[0].title(),
-                               'album': tags.get('TALB', '')[0],
-                               'year': tags.get('TDRC', '')[0],
-                               'track': tags.get('TIT2', '')[0],
+                    initial = {'artist': tags.get('TPE1', [''])[0].title(),
+                               'title': tags.get('TIT2', [''])[0].title(),
+                               'album': tags.get('TALB', [''])[0],
+                               'year': tags.get('TDRC', [''])[0],
+                               'track': tags.get('TIT2', [''])[0],
                                'genre': '1'
                                }
                     form = SongCommit(initial)
-                except id3.ID3NoHeaderError:
+                except(id3.ID3NoHeaderError):
                     form = SongCommit()
                     return render(request, 'upload.html',
                                   {'form': form, 'uploaded_file_url': request.session.get('TempFileURL')})
