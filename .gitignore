@@ -6,3 +6,6 @@ db.sqlite3
 
 # Django Parts
 manage.py
+
+# Python cache files
+*.pyc
