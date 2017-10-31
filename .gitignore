@@ -1,0 +1,8 @@
+# Ststic Files
+static/
+
+# Database
+db.sqlite3
+
+# Django Parts
+manage.py
