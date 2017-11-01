@@ -67,7 +67,7 @@ def upload(request):
                                'genre': '1'
                                }
                     form = SongCommit(initial)
-                except(id3.ID3NoHeaderError):
+                except id3.ID3NoHeaderError:
                     form = SongCommit()
                     return render(request, 'upload.html',
                                   {'form': form, 'uploaded_file_url': request.session.get('TempFileURL')})
@@ -81,7 +81,10 @@ def upload(request):
             if form.is_valid():
                 model = form.save(commit=False)
                 # Обновление тэгов файла
-                tags = id3.ID3(request.session.get('TempFilePath'))
+                try:
+                    tags = id3.ID3(request.session.get('TempFilePath'))
+                except id3.ID3NoHeaderError:
+                    tags = id3.ID3()
                 tags.update_to_v23()
                 tags.add(id3.TPE1(encoding=3, text=form.cleaned_data['artist']))
                 tags.add(id3.TIT2(encoding=3, text=form.cleaned_data['title']))
@@ -89,7 +92,7 @@ def upload(request):
                 tags.add(id3.TDRC(encoding=3, text=str(form.cleaned_data['album'])))
                 tags.add(id3.TRCK(encoding=3, text=str(form.cleaned_data['track'])))
                 tags.add(id3.TCON(encoding=3, text=str(form.cleaned_data['genre'])))
-                tags.save()
+                tags.save(request.session.get('TempFilePath')) if tags.filename == None else tags.save()
             # Создание файлового объекта Джанго из временного файла для последующего крепления в модель.
             with open(request.session.get('TempFilePath'), 'rb') as TempFile:
                 django_file_object = File(TempFile)
