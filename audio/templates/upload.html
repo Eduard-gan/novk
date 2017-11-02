@@ -2,6 +2,13 @@
 {% block content %}
 {% load widget_tweaks %}
 
+<style>
+    .df {
+        float:center;
+    }
+</style>
+
+<div class="df">
 <form action="/music/upload/" method="post" class="form" enctype="multipart/form-data">
     {% csrf_token %}
     {% if form.file %}
@@ -13,5 +20,5 @@
     {% endif %}
     <input type="submit" value="Загрузить" class="btn btn-primary">
 </form>
-
+</div>
 {% endblock %}
