@@ -10,11 +10,12 @@ from django.contrib.auth.decorators import login_required
 import magic
 from django.core.files import File
 from django.shortcuts import HttpResponseRedirect
+from mutagen.id3._frames import TPE1, TIT2, TALB, TDRC, TRCK, TCON
 
 
 def get_random_name():
     return "".join(
-        [random.choice(list('123456789qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM')) for x in range(12)])
+        [random.choice(list('123456789qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM')) for _ in range(12)])
 
 
 def convert_to_unicode(possible_cp1251_string):
@@ -86,27 +87,27 @@ def upload(request):
                 except id3.ID3NoHeaderError:
                     tags = id3.ID3()
                 tags.update_to_v23()
-                tags.add(id3.TPE1(encoding=3, text=form.cleaned_data['artist']))
-                tags.add(id3.TIT2(encoding=3, text=form.cleaned_data['title']))
-                tags.add(id3.TALB(encoding=3, text=form.cleaned_data['album']))
-                tags.add(id3.TDRC(encoding=3, text=str(form.cleaned_data['album'])))
-                tags.add(id3.TRCK(encoding=3, text=str(form.cleaned_data['track'])))
-                tags.add(id3.TCON(encoding=3, text=str(form.cleaned_data['genre'])))
-                tags.save(request.session.get('TempFilePath')) if tags.filename == None else tags.save()
+                tags.add(TPE1(encoding=3, text=form.cleaned_data['artist']))
+                tags.add(TIT2(encoding=3, text=form.cleaned_data['title']))
+                tags.add(TALB(encoding=3, text=form.cleaned_data['album']))
+                tags.add(TDRC(encoding=3, text=str(form.cleaned_data['album'])))
+                tags.add(TRCK(encoding=3, text=str(form.cleaned_data['track'])))
+                tags.add(TCON(encoding=3, text=str(form.cleaned_data['genre'])))
+                tags.save(request.session.get('TempFilePath')) if not tags.filename else tags.save()
             # Создание файлового объекта Джанго из временного файла для последующего крепления в модель.
-            with open(request.session.get('TempFilePath'), 'rb') as TempFile:
-                django_file_object = File(TempFile)
-                model.file = django_file_object
-                model.file.name = request.session.get('TempFileName') + '.mp3'
-                model.artist = form.cleaned_data['artist']
-                model.title = form.cleaned_data['title']
-                model.album = form.cleaned_data['album']
-                model.year = form.cleaned_data['year']
-                model.track = form.cleaned_data['track']
-                model.genre = form.cleaned_data['genre']
-                model.save()
+                with open(request.session.get('TempFilePath'), 'rb') as TempFile:
+                    django_file_object = File(TempFile)
+                    model.file = django_file_object
+                    model.file.name = request.session.get('TempFileName') + '.mp3'
+                    model.artist = form.cleaned_data['artist']
+                    model.title = form.cleaned_data['title']
+                    model.album = form.cleaned_data['album']
+                    model.year = form.cleaned_data['year']
+                    model.track = form.cleaned_data['track']
+                    model.genre = form.cleaned_data['genre']
+                    model.save()
             # Удаление временного файла
-            os.remove(request.session.get('TempFilePath'))
+                os.remove(request.session.get('TempFilePath'))
             return HttpResponseRedirect('/music/')
     return HttpResponse(
         "<p>No actions found in views.upload for request's HTTP-method {}</p>".format(
