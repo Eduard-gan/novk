@@ -2,23 +2,22 @@
 {% block content %}
 {% load widget_tweaks %}
 
-<style>
-    .df {
-        float:center;
-    }
-</style>
+    <div class="container container-table">
+        <div class="row vertical-center-row">
+            <div class="text-center col-xl-1">
+                <form action="/music/upload/" method="post" class="form" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {% if form.file %}
+                    <label class="btn btn-default btn-file">
+                    Обзор {% render_field form.file style="display: none;" %}
+                    </label>
+                    {% else %}
+                    {{ form.as_p }}
+                    {% endif %}
+                    <input type="submit" value="Загрузить" class="btn btn-primary">
+                </form>
+            </div>
+        </div>
+    </div>
 
-<div class="df">
-<form action="/music/upload/" method="post" class="form" enctype="multipart/form-data">
-    {% csrf_token %}
-    {% if form.file %}
-    <label class="btn btn-default btn-file">
-        Обзор {% render_field form.file style="display: none;" %}
-    </label>    
-    {% else %}
-    {{ form.as_p }}
-    {% endif %}
-    <input type="submit" value="Загрузить" class="btn btn-primary">
-</form>
-</div>
 {% endblock %}
