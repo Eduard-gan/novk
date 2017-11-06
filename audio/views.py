@@ -7,10 +7,33 @@ import random
 from django.conf import settings
 import os
 from django.contrib.auth.decorators import login_required
-import magic
 from django.core.files import File
 from django.shortcuts import HttpResponseRedirect
 from mutagen.id3._frames import TPE1, TIT2, TALB, TDRC, TRCK, TCON
+import binascii
+
+
+def get_filetype(file):
+
+    signatures = {'mp3 with id3': b'4944',
+                  'mp3 wthout id3': b'fffb'
+                  }
+    filetype = 'Not supported filetype'
+
+    with open(file, 'rb') as data:
+        byte = data.read(1)
+        if byte != b'\x00':
+            data.seek(0)
+        else:
+            while byte == b'\x00':
+                byte = data.read(1)
+            data.seek((data.tell()-1))
+        chunk = data.read(3)
+
+        for sig in signatures.items():
+            if sig[1] in binascii.hexlify(chunk):
+                filetype = sig[0]
+    return filetype
 
 
 def get_random_name():
@@ -53,9 +76,8 @@ def upload(request):
             request.session['TempFilePath'] = fs.path(filename)
 
             # Анализ типа файла
-            mime = magic.Magic(mime=True)
-            filetype = mime.from_file(fs.path(filename))
-            if filetype == 'audio/mpeg':
+            filetype = get_filetype(fs.path(filename))
+            if filetype != 'Not supported filetype':
                 # Попытка считывания и передача тэгов в форму
                 # для передачи пользователю где он вносит правки и подтверждает.
                 try:
