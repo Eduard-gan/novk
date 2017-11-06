@@ -1,10 +1,24 @@
 Mode = 'normal';
 
+
+function ccolorizeSong(ColorizingTarget) {
+	var PreviousSongList = document.getElementsByClassName("warning");
+    if (PreviousSongList.length > 0) {
+      	PreviousSongList[0].className = "success";
+       	ColorizingTarget.parentNode.className = "warning";
+	}
+	else{
+       	ColorizingTarget.parentNode.className = "warning";
+	}
+}
+
+
 function clickWrapper(ChosenSong) {
     var Path = getSongPath(ChosenSong.id);
     var Player = document.getElementById("player");
 	Player.src = Path;
 	Player.play();
+	ccolorizeSong(ChosenSong);
 
 	if (Mode === 'repeat')
 	{
@@ -40,6 +54,7 @@ function getNextSongID( SongID ) {
 	return( "getNextSongID ended with no result" );
 }
 
+
 function appendTextToMusic(Text) {
 	var Log = document.getElementsByTagName("h6");
 	var node = document.createElement("LI");
@@ -47,6 +62,7 @@ function appendTextToMusic(Text) {
     node.appendChild(textnode);
     Log.item(0).appendChild(node);
 }
+
 
 function changeSong( Player , EndedSong ) {
 	appendTextToMusic("changeSong: Entered, getting  NewSongID...");
@@ -60,4 +76,7 @@ function changeSong( Player , EndedSong ) {
 	appendTextToMusic("changeSong: onended set. Trying to call play()...");
 	Player.play();
 	appendTextToMusic("changeSong: play() called. Function Ended. WTF: Next will be call 'onended' on 59Line");
+
+	ccolorizeSong(document.getElementById(NewSongID));
+	appendTextToMusic("changeSong: Song was colorized");
 }
