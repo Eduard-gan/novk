@@ -6,14 +6,16 @@
       .tk
     </div>
 	        
-{% load bootstrap3 %}
-<form action="/login/" method="post" class="form">
+{% load widget_tweaks %}
+<form action="/login/" method="post" class="form-group">
 	{% csrf_token %}
-	{% bootstrap_field form.username show_label=False %}
-	{% bootstrap_field form.password show_label=False %}
-    {% buttons %}{% bootstrap_button "Войти" button_class="btn-primary" button_type="submit" %}{% endbuttons %}
+	{% render_field form.username show_label=False class+="form-control" placeholder="Логин" %}
+    <br>
+	{% render_field form.password show_label=False class+="form-control" placeholder="Пароль"%}
+    <br>
+    <button type="submit" class="btn btn-primary">Войти</button>
 </form>
 <form action="/signup/">
-	{% buttons %}{% bootstrap_button "Регистрация" button_class="btn-primary" button_type="submit" %}{% endbuttons %}
+    <button type="submit" class="btn btn-primary">Регистрация</button>
 </form>
 {% endblock %}

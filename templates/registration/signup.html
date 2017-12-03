@@ -6,10 +6,28 @@
       .tk
     </div>
 
-{% load bootstrap3 %}
-<form action="" method="post" class="form">
-	{% csrf_token %}
-	{% bootstrap_form form show_label=False %}
-    {% buttons %}{% bootstrap_button "Зарегистрироваться" button_class="btn-primary" button_type="submit" %}{% endbuttons %}
-</form>
+{% load widget_tweaks %}
+
+    <form action="" method="post" class="form-group">
+        {% csrf_token %}
+
+        {% for field in form %}
+            {% if field.errors %}
+                <div class="form-group has-error">
+                {% render_field field show_label=False class+="form-control" placeholder=field.label %}
+                <div class="text-danger">{{ field.errors }}</div>
+                </div>
+            {% else %}
+                <div class="form-group has-success">
+                {% render_field field show_label=False class+="form-control" placeholder=field.label %}
+                {% if field.help_text %}
+                    <p class="help">{{ field.help_text|safe }}</p>
+                {% endif %}
+                </div>
+            {% endif %}
+        {% endfor %}
+
+        <button type="submit" class="btn btn-primary">Зарегистрироваться</button>
+    </form>
 {% endblock %}
+
