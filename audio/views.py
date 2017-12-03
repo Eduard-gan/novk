@@ -38,7 +38,8 @@ def get_filetype(file):
 
 def get_random_name():
     return "".join(
-        [random.choice(list('123456789qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM')) for _ in range(12)])
+        [random.choice(list('123456789qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM')) for _ in range(12)]
+    )
 
 
 def convert_to_unicode(possible_cp1251_string):
@@ -82,19 +83,21 @@ def upload(request):
                 # для передачи пользователю где он вносит правки и подтверждает.
                 try:
                     tags = id3.ID3(fs.path(filename))
-                    initial = {'artist': convert_to_unicode(tags.get('TPE1', [''])[0]).title(),
-                               'title': convert_to_unicode(tags.get('TIT2', [''])[0]).title(),
-                               'album': convert_to_unicode(tags.get('TALB', [''])[0]),
-                               'year': tags.get('TDRC', [''])[0],
-                               'track': tags.get('TIT2', [''])[0],
-                               'genre': '1'
-                               }
+                    initial = {
+                        'artist': convert_to_unicode(tags.get('TPE1', [''])[0]).title(),
+                        'title': convert_to_unicode(tags.get('TIT2', [''])[0]).title(),
+                        'album': convert_to_unicode(tags.get('TALB', [''])[0]),
+                        'year': tags.get('TDRC', [''])[0],
+                        'track': tags.get('TIT2', [''])[0],
+                        'genre': '1'
+                    }
                     form = SongCommit(initial)
                 except id3.ID3NoHeaderError:
                     form = SongCommit()
                     return render(request, 'upload.html',
                                   {'form': form, 'uploaded_file_url': request.session.get('TempFileURL')})
             else:
+                os.remove(request.session.get('TempFilePath'))
                 return HttpResponse('No processing code for mime type {}'.format(filetype))
             return render(request, 'upload.html',
                           {'form': form, 'uploaded_file_url': request.session.get('TempFileURL')})
@@ -103,8 +106,7 @@ def upload(request):
             form = SongCommit(request.POST)
             if form.is_valid():
                 model = form.save(commit=False)
-                # Обновление тэгов файла
-                try:
+                try:  # Обновление тэгов файла
                     tags = id3.ID3(request.session.get('TempFilePath'))
                 except id3.ID3NoHeaderError:
                     tags = id3.ID3()
@@ -128,9 +130,11 @@ def upload(request):
                     model.track = form.cleaned_data['track']
                     model.genre = form.cleaned_data['genre']
                     model.save()
-            # Удаление временного файла
+                # Удаление временного файла
                 os.remove(request.session.get('TempFilePath'))
-            return HttpResponseRedirect('/music/')
+            else:   # В случае невалидной формы показываем её ещё
+                return render(request, 'upload.html', {'form': form})
+        return HttpResponseRedirect('/music/')
     return HttpResponse(
         "<p>No actions found in views.upload for request's HTTP-method {}</p>".format(
             request.method))

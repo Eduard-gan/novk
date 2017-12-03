@@ -17,20 +17,33 @@ audio.pinned {
 }
 </style>
 
-
 <audio class="pinned" id = "player" controls preload="none">
         <source src="">
         Your browser does not support the audio element.
         </audio>
 
+
 <a href="/music/upload" class="btn btn-primary">Загрузить</a>
 
 
-<table class="table table-striped table-hover">
+<ul id="contextMenu" class="dropdown-menu" role="menu">
+    <li><a tabindex="-1" href="#">Action</a></li>
+    <li><a tabindex="-1" href="#">Another action</a></li>
+    <li><a tabindex="-1" href="#">Something else here</a></li>
+    <li class="divider"></li>
+    <li><a tabindex="-1" href="#">Separated link</a></li>
+</ul>
+
+
+<table class="table table-striped table-hover" id="SongTable">
 <tbody>
 {% for song in songs %}
 <tr class="success">
-    <td class="Song" onclick="clickWrapper(this)" data-path="{{song.file}}" id="{{song.id}}">{{song.artist}} - {{song.title}}</td>
+    <td class="Song"
+        onclick="clickWrapper(this)"
+        data-path="{{song.file}}" id="{{song.id}}">
+        {{song.artist}} - {{song.title}}
+    </td>
 </tr>
 {% endfor %}
 </tbody>

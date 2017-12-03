@@ -1,7 +1,5 @@
 from django.db import models
 
-DEFAULT_GENRE_ID = 1
-
 
 class Genre(models.Model):
     name = models.CharField(max_length=32)
@@ -17,7 +15,7 @@ class Song(models.Model):
     year = models.IntegerField(null=True, blank=True)
     comment = models.CharField(max_length=32, blank=True)
     track = models.IntegerField(null=True, blank=True)
-    genre = models.ForeignKey(Genre, on_delete=models.PROTECT, default=DEFAULT_GENRE_ID)
+    genre = models.ForeignKey(Genre, on_delete=models.PROTECT, blank=True, null=True)
     file = models.FileField(upload_to='audio')
 
     def __str__(self):
