@@ -1,5 +1,5 @@
 from django.db import models
-
+from django.contrib.auth.models import User
 
 class Genre(models.Model):
     name = models.CharField(max_length=32)
@@ -20,3 +20,9 @@ class Song(models.Model):
 
     def __str__(self):
         return self.artist + ' - ' + self.title
+
+
+class Playlist(models.Model):
+    number = models.IntegerField()
+    user = models.ForeignKey(User)
+    song = models.ForeignKey(Song)

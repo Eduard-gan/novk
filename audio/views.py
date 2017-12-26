@@ -11,6 +11,7 @@ from django.core.files import File
 from django.shortcuts import HttpResponseRedirect
 from mutagen.id3._frames import TPE1, TIT2, TALB, TDRC, TRCK, TCON
 import binascii
+from audio.models import Playlist
 
 
 def get_filetype(file):
@@ -56,7 +57,7 @@ def convert_to_unicode(possible_cp1251_string):
 
 @login_required
 def music(request):
-    songs = Song.objects.all().values()
+    songs = Song.objects.filter(playlist__user=request.user, playlist__number=0).values()
     context = {}
     context.update({'songs': songs})
     return render(request, 'music.html', context)
@@ -130,6 +131,8 @@ def upload(request):
                     model.track = form.cleaned_data['track']
                     model.genre = form.cleaned_data['genre']
                     model.save()
+                    # Добавление в дефолтный плэйлист
+                    Playlist.objects.create(user=request.user, number=0, song=model)
                 # Удаление временного файла
                 os.remove(request.session.get('TempFilePath'))
             else:   # В случае невалидной формы показываем её ещё
