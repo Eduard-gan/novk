@@ -16,6 +16,5 @@ urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^music/', include('audio.urls')),
     url(r'^__debug__/', include(debug_toolbar.urls)),
-    url(r'^test/', core_views.test.as_view()),
     url(r'^$', RedirectView.as_view(url='music/', permanent=False))
 ]

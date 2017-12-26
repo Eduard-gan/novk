@@ -1,8 +1,6 @@
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.forms import UserCreationForm
 from django.shortcuts import render, redirect
-from django.http import HttpResponse
-from django.views.generic import View
 
 def signup(request):
     if request.method == 'POST':
@@ -18,8 +16,3 @@ def signup(request):
     else:
         form = UserCreationForm()
     return render(request, 'registration/signup.html', {'form': form})
-    #return (HttpResponse('<p>FUCK YOU</p>'))
-
-class test(View):
-    def get(self,request):
-        return HttpResponse('{}')
