@@ -4,8 +4,8 @@
 
     <br>
     <br>
-	<h1>Music</h1>
-    <h6>Debug Log:</h6>
+    <br>
+    <br>
 
 <style>
 audio.pinned {
@@ -21,9 +21,30 @@ audio.pinned {
         Your browser does not support the audio element.
         </audio>
 
+<ul class="nav nav-pills">
+  <li class="active"><a href="/music/upload">Загрузить</a></li>
+  <li class="dropdown">
+  <a class="dropdown-toggle" data-toggle="dropdown" href="#">Плэйлист
+  <span class="caret"></span></a>
+  <ul class="dropdown-menu">
+      <li><a href="#">Грустная</a></li>
+      <li><a href="#">Скайрим</a></li>
+      <li><a href="#">Тяжелая</a></li>
+  </ul>
+  </li>
+</ul>
 
-<a href="/music/upload" class="btn btn-primary">Загрузить</a>
+  <br>
 
+    <div class="container container-table">
+        <div class="row vertical-center-row">
+            <div class="text-center col-xl-1">
+                <span class="badge badge-warning">Selected playlist name</span>
+            </div>
+        </div>
+    </div>
+
+  <br>
 
 <ul id="contextMenu" class="dropdown-menu" role="menu">
     <li><a tabindex="-1" href="#">Action</a></li>

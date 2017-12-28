@@ -4927,6 +4927,10 @@ a.label:focus {
   background-color: #464545;
   border-radius: 10px;
 }
+.badge-warning {
+    color: #111;
+    background-color: #F39C12;
+}
 .badge:empty {
   display: none;
 }
