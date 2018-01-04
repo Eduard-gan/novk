@@ -1,8 +1,9 @@
 # All static files
 static/*
 ## Folder keepers
-!static/temp/*
-!static/audio/*
+!static/.gitkeep
+!static/temp/.gitkeep
+!static/audio/rfrF75Ccc98g.mp3
 
 # Database
 db.sqlite3
