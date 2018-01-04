@@ -1,0 +1,14 @@
+certifi==2017.7.27.1
+chardet==3.0.4
+Django==1.11.5
+django-debug-toolbar==1.8
+django-widget-tweaks==1.4.1
+idna==2.6
+mutagen==1.39
+olefile==0.44
+Pillow==4.2.1
+pkg-resources==0.0.0
+pytz==2017.2
+requests==2.18.4
+sqlparse==0.2.4
+urllib3==1.22
