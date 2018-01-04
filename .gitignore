@@ -3,6 +3,7 @@ static/*
 # Folder keeper
 !static/.gitkeep
 !static/temp/.gitkeep
+!static/audio
 
 # Database
 db.sqlite3
