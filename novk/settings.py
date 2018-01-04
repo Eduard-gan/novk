@@ -8,7 +8,7 @@ SECRET_KEY = '8v474ofn_%^m@%#8k^-7g&5!hf%4!bgpii(y400549an3k+(_4'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['testserver','novk.tk','127.0.0.1']
+ALLOWED_HOSTS = ['testserver', 'novk.tk', '127.0.0.1']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -83,6 +83,10 @@ USE_TZ = True
 
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/music/'
+
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'novk/static'),
+]
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
