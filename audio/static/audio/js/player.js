@@ -55,31 +55,15 @@ function getNextSongID( SongID ) {
 }
 
 
-function appendTextToMusic(Text) {
-	var Log = document.getElementsByTagName("h6");
-	var node = document.createElement("LI");
-    var textnode = document.createTextNode(Text);
-    node.appendChild(textnode);
-    Log.item(0).appendChild(node);
-}
-
-
 function changeSong( Player , EndedSong ) {
-	appendTextToMusic("changeSong: Entered, getting  NewSongID...");
 	var NewSongID = getNextSongID(EndedSong);
-	appendTextToMusic("changeSong: Got NewSongID("+NewSongID+") Setting new Player.src path...");
 	Player.src = getSongPath(NewSongID);
-	appendTextToMusic("changeSong: New Player.src path set = "+Player.src+". Trying to call load()...");
 	Player.load();
-	appendTextToMusic("changeSong: load() called. Setting updated onended event function...");
 	Player.onended = function() { changeSong(Player, NewSongID) };
-	appendTextToMusic("changeSong: onended set. Trying to call play()...");
 	Player.play();
-	appendTextToMusic("changeSong: play() called. Function Ended. WTF: Next will be call 'onended' on 59Line");
-
 	ccolorizeSong(document.getElementById(NewSongID));
-	appendTextToMusic("changeSong: Song was colorized");
 }
+
 
 (function ($, window) {
 
