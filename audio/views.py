@@ -48,10 +48,10 @@ def convert_to_unicode(possible_cp1251_string):
     for letter in possible_cp1251_string:
         temp = letter.encode('raw_unicode_escape')
         testnumber = int.from_bytes(temp, 'big')
-        if testnumber > 127 < 256:
+        if 127 > testnumber < 256:
             converted_unicode_string += ((temp.decode('cp1251')).encode('UTF-8')).decode()
         else:
-            converted_unicode_string += temp.decode()
+            converted_unicode_string += letter
     return converted_unicode_string
 
 
