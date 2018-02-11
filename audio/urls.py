@@ -1,8 +1,9 @@
 from django.conf.urls import url
 
-from . import views
+from audio.views import music, upload, CreatePlaylist
 
 urlpatterns = [
-    url(r'^upload/+$', views.upload, name='upload'),
-    url(r'^$', views.music, name='music')
+    url(r'^upload/+$', upload, name='upload'),
+    url(r'^create-playlist/$', CreatePlaylist.as_view(), name='create-playlist'),
+    url(r'^$', music, name='music')
 ]

@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.http import HttpResponse
-from .forms import *
+from .forms import Upload, SongCommit
 from django.core.files.storage import FileSystemStorage
 from mutagen import id3
 import random
@@ -11,7 +11,8 @@ from django.core.files import File
 from django.shortcuts import HttpResponseRedirect
 from mutagen.id3._frames import TPE1, TIT2, TALB, TDRC, TRCK, TCON
 import binascii
-from audio.models import Playlist
+from audio.models import Playlist, Song
+from django.views.generic import CreateView
 
 
 def get_filetype(file):
@@ -57,16 +58,34 @@ def convert_to_unicode(possible_cp1251_string):
 
 @login_required
 def music(request):
-    songs = Song.objects.filter(playlist__user=request.user, playlist__number=0).values()
+
+    # Получаем текущий плэйлист из параметров GET'а. Если их нет - используем дефолтный.
+    try:
+        current_playlist = int(request.GET['playlist'])
+    except KeyError:
+        current_playlist = 0
+
+    # Определение набора песен в плэйлисте
+    songs = Song.objects.filter(playlist__user=request.user, playlist__number=current_playlist)
+
+    # В SQLite нет DISTINCT по конкретным полям, поэтому заранее выводим только одинаковые записи с помощью .values():
+    playlists = Playlist.objects.filter(user=request.user).values('number', 'name').distinct()
+
     context = {}
-    context.update({'songs': songs})
-    return render(request, 'music.html', context)
+    context.update({'songs': songs,
+                    'playlists': playlists,
+                    'current_playlist': Playlist.objects.filter(number=current_playlist,
+                                                                user=request.user
+                                                                ).values('name').distinct()[0]
+                    })
+
+    return render(request, 'audio/music.html', context)
 
 
 def upload(request):
     if request.method == 'GET':
         form = Upload()
-        return render(request, 'upload.html', {'form': form})
+        return render(request, 'audio/upload.html', {'form': form})
     if request.method == 'POST':
         if request.FILES.get('file'):
             # Сохранение файла во временной папке и отдача в сессию сведений о временном файле
@@ -95,12 +114,12 @@ def upload(request):
                     form = SongCommit(initial)
                 except id3.ID3NoHeaderError:
                     form = SongCommit()
-                    return render(request, 'upload.html',
+                    return render(request, 'audio/upload.html',
                                   {'form': form, 'uploaded_file_url': request.session.get('TempFileURL')})
             else:
                 os.remove(request.session.get('TempFilePath'))
                 return HttpResponse('No processing code for mime type {}'.format(filetype))
-            return render(request, 'upload.html',
+            return render(request, 'audio/upload.html',
                           {'form': form, 'uploaded_file_url': request.session.get('TempFileURL')})
         elif request.FILES.get('file') is None:
             # Связываем принятые данные с новой формой для валидации
@@ -136,8 +155,23 @@ def upload(request):
                 # Удаление временного файла
                 os.remove(request.session.get('TempFilePath'))
             else:   # В случае невалидной формы показываем её ещё
-                return render(request, 'upload.html', {'form': form})
+                return render(request, 'audio/upload.html', {'form': form})
         return HttpResponseRedirect('/music/')
     return HttpResponse(
         "<p>No actions found in views.upload for request's HTTP-method {}</p>".format(
             request.method))
+
+
+class CreatePlaylist(CreateView):
+    template_name = 'audio/create_playlist.html'
+    model = Playlist
+    fields = ['name']
+
+    def form_valid(self, form):
+        print('LOL')
+
+        A = Playlist.objects.filter(user=1)
+        R = A.get_highest_playlist_number()
+        B = R + 1
+        #
+        # A = Playlist.objects.filter(user=self.request.user).get_highest_playlist_number()

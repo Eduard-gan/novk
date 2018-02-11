@@ -22,7 +22,19 @@ class Song(models.Model):
         return self.artist + ' - ' + self.title
 
 
+class PlaylistQuerySet(models.QuerySet):
+    def get_highest_playlist_number(self):
+        numbers = self.all().values('number').distinct()
+        highest = 0
+        for n in numbers:
+            if n['number'] > highest:
+                highest = n['number']
+        return highest
+
 class Playlist(models.Model):
+    name = models.CharField(max_length=32, default='Медиатека')
     number = models.IntegerField()
     user = models.ForeignKey(User)
-    song = models.ForeignKey(Song)
+    song = models.ForeignKey(Song, null=True, blank=True)
+
+    objects = PlaylistQuerySet.as_manager()

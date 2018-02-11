@@ -17,8 +17,3 @@ class SongCommit(forms.ModelForm):
                     'track',
                     'genre',
         ]
-
-class SongCommit2(forms.ModelForm):
-    class Meta:
-        model = Song
-        fields = '__all__'
