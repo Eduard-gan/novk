@@ -1,0 +1,17 @@
+{% extends "Base.html" %}
+{% block content %}
+{% load widget_tweaks %}
+
+    <div class="container container-table">
+        <div class="row vertical-center-row">
+            <div class="text-center col-xl-1">
+                <form action="{% url 'create-playlist' %}" method="post" class="form">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <input type="submit" value="Создать" class="btn btn-primary">
+                </form>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
