@@ -68,7 +68,7 @@ def music(request):
         current_playlist = 0
 
     # Определение набора песен в плэйлисте
-    songs = Song.objects.filter(playlist__user=request.user, playlist__number=current_playlist)
+    songs = Song.objects.filter(playlist__user=request.user, playlist__number=current_playlist).order_by('-id')
 
     # В SQLite нет DISTINCT по конкретным полям, поэтому заранее выводим только одинаковые записи с помощью .values():
     playlists = Playlist.objects.filter(user=request.user).values('number', 'name').distinct()
