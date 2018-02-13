@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 
+
 class Genre(models.Model):
     name = models.CharField(max_length=32)
 
@@ -17,6 +18,7 @@ class Song(models.Model):
     track = models.IntegerField(null=True, blank=True)
     genre = models.ForeignKey(Genre, on_delete=models.PROTECT, blank=True, null=True)
     file = models.FileField(upload_to='audio')
+    # uploaded = models.DateField()                                                       TODO Music-history key element
 
     def __str__(self):
         return self.artist + ' - ' + self.title
@@ -30,6 +32,7 @@ class PlaylistQuerySet(models.QuerySet):
             if n['number'] > highest:
                 highest = n['number']
         return highest
+
 
 class Playlist(models.Model):
     name = models.CharField(max_length=32, default='Медиатека')
