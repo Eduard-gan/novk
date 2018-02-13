@@ -13,6 +13,8 @@ from mutagen.id3._frames import TPE1, TIT2, TALB, TDRC, TRCK, TCON
 import binascii
 from audio.models import Playlist, Song
 from django.views.generic import CreateView
+from django.shortcuts import reverse
+from django.forms.utils import ErrorList
 
 
 def get_filetype(file):
@@ -165,13 +167,18 @@ def upload(request):
 class CreatePlaylist(CreateView):
     template_name = 'audio/create_playlist.html'
     model = Playlist
-    fields = ['name']
+    fields = ('name',)
+
 
     def form_valid(self, form):
-        print('LOL')
 
-        A = Playlist.objects.filter(user=1)
-        R = A.get_highest_playlist_number()
-        B = R + 1
-        #
-        # A = Playlist.objects.filter(user=self.request.user).get_highest_playlist_number()
+        # Проверка имени плэйлиста на уникальность для данного пользователя.
+        if Playlist.objects.filter(user=self.request.user, name=form.cleaned_data['name']):
+            errors = form._errors.setdefault('name', ErrorList())
+            errors.append('Плэйлист с таким названием уже есть, выберите другое.')
+            return render(self.request, self.template_name, {'form': form})
+        else:
+            last_playlist_number = Playlist.objects.filter(user=self.request.user).get_highest_playlist_number()
+            Playlist.objects.create(user=self.request.user, number=last_playlist_number + 1,
+                                    name=form.cleaned_data['name'])
+            return HttpResponseRedirect(reverse('music'))

@@ -1,8 +1,11 @@
 from django.contrib import admin
+from .models import Song , Genre, Playlist
 
-# Register your models here.
 
-from .models import Song , Genre
+class PlaylistAdmin(admin.ModelAdmin):
+    list_display = ('name', 'user', 'song', )
+    list_filter = ('name', 'user',)
 
 admin.site.register(Song)
 admin.site.register(Genre)
+admin.site.register(Playlist, PlaylistAdmin)
