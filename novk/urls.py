@@ -5,7 +5,7 @@ from django.conf.urls import include
 from django.contrib.auth import views as auth_views
 from django.views.generic.base import RedirectView
 from django.urls import reverse_lazy
-from novk import views as core_views 
+from novk import views as core_views
 
 import debug_toolbar
 
@@ -16,5 +16,5 @@ urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^music/', include('audio.urls')),
     url(r'^__debug__/', include(debug_toolbar.urls)),
-    url(r'^$', RedirectView.as_view(url='music/', permanent=False))
+    url(r'^$', RedirectView.as_view(url='music/', permanent=False)),
 ]

@@ -27,11 +27,11 @@ audio.pinned {
   <li class="dropdown">
   <a class="dropdown-toggle" data-toggle="dropdown" href="#">Плэйлист
   <span class="caret"></span></a>
-  <ul class="dropdown-menu">
-      <li><a href="{% url 'create-playlist' %}">Создать</a></li>
+  <ul class="dropdown-menu" id="playlists">
       {% for playlist in playlists %}
       <li><a href="?playlist={{ playlist.number }}">{{ playlist.name }}</a></li>
       {% endfor %}
+      <li><a href="{% url 'create-playlist' %}">Создать</a></li>
   </ul>
   </li>
 </ul>
@@ -48,14 +48,6 @@ audio.pinned {
 
   <br>
 
-<ul id="contextMenu" class="dropdown-menu" role="menu">
-    <li><a tabindex="-1" href="#">Action</a></li>
-    <li><a tabindex="-1" href="#">Another action</a></li>
-    <li><a tabindex="-1" href="#">Something else here</a></li>
-    <li class="divider"></li>
-    <li><a tabindex="-1" href="#">Separated link</a></li>
-</ul>
-
 
 <table class="table table-striped table-hover" id="SongTable">
 <tbody>
@@ -71,6 +63,37 @@ audio.pinned {
 </tbody>
 </table>
 
+
+{# Menu layout #}
+<ul id="contextMenu" class="dropdown-menu" role="menu">
+    <li><a tabindex="-1" href="#">Добавить в плэйлист</a></li>
+    <li><a tabindex="-1" href="#">Another action</a></li>
+    <li><a tabindex="-1" href="#">Something else here</a></li>
+    <li class="divider"></li>
+    <li><a tabindex="-1" href="#">Separated link</a></li>
+</ul>
+
+
+{# Modal for adding into playlist menu function #}
+<div class="modal fade" id="add_into_playlist" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" data-invoked_song_id=0>
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-body">
+        <div class="list-group">
+          {% for playlist in playlists %}
+            <button class="btn btn-primary btn-block" type="button" data-dismiss="modal" data-playlist-number="{{ playlist.number }}" onclick="ajax_add_to_playlist(this)">{{ playlist.name }}</button>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% csrf_token %}
+
+<script type="text/javascript" src={% static "js/common.js" %} language="JavaScript"></script>
 <script type="text/javascript" src={% static "audio/js/player.js" %} language="JavaScript"></script>
+<script type="text/javascript" src={% static "audio/js/ajax.js" %} language="JavaScript"></script>
+
 
 {% endblock %}
