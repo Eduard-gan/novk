@@ -22,19 +22,19 @@ audio.pinned {
         Your browser does not support the audio element.
         </audio>
 
-<ul class="nav nav-pills">
-  <li class="active"><a href="{% url 'upload' %}">Загрузить</a></li>
-  <li class="dropdown">
-  <a class="dropdown-toggle" data-toggle="dropdown" href="#">Плэйлист
+<div class="nav nav-pills">
+  <li class="btn btn-outline-success"><a style="color: inherit" href="{% url 'upload' %}">Загрузить</a></li>
+  <li class="dropdown btn btn-outline-success">
+  <a class="dropdown-toggle" style="color: inherit" data-toggle="dropdown" href="#">Плэйлист
   <span class="caret"></span></a>
-  <ul class="dropdown-menu" id="playlists">
+  <div class="dropdown-menu" id="playlists" style="left: 0px; top: 0px; position: absolute; transform: translate3d(0px, 38px, 0px);" x-placement="bottom-start">
       {% for playlist in playlists %}
-      <li><a href="?playlist={{ playlist.number }}">{{ playlist.name }}</a></li>
+      <a class="dropdown-item" href="?playlist={{ playlist.number }}">{{ playlist.name }}</a>
       {% endfor %}
-      <li><a href="{% url 'create-playlist' %}">Создать</a></li>
-  </ul>
+      <a class="dropdown-item" href="{% url 'create-playlist' %}">Создать</a>
+  </div>
   </li>
-</ul>
+</div>
 
   <br>
 
@@ -52,7 +52,7 @@ audio.pinned {
 <table class="table table-striped table-hover" id="SongTable">
 <tbody>
 {% for song in songs %}
-<tr class="success">
+<tr class="table-default">
     <td class="Song"
         onclick="clickWrapper(this)"
         data-path="{{song.file}}" id="{{song.id}}">
@@ -65,13 +65,13 @@ audio.pinned {
 
 
 {# Menu layout #}
-<ul id="contextMenu" class="dropdown-menu" role="menu">
-    <li><a tabindex="-1" href="#">Добавить в плэйлист</a></li>
-    <li><a tabindex="-1" href="#">Another action</a></li>
-    <li><a tabindex="-1" href="#">Something else here</a></li>
-    <li class="divider"></li>
-    <li><a tabindex="-1" href="#">Separated link</a></li>
-</ul>
+<div id="contextMenu" class="dropdown-menu" role="menu">
+    <a class="dropdown-item" tabindex="-1" href="#">Добавить в плэйлист</a>
+    <a class="dropdown-item" tabindex="-1" href="#">Another action</a>
+    <a class="dropdown-item" tabindex="-1" href="#">Something else here</a>
+    <div class="dropdown-divider"></div>
+    <a class="dropdown-item" tabindex="-1" href="#">Separated link</a>
+</div>
 
 
 {# Modal for adding into playlist menu function #}

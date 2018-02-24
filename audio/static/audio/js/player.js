@@ -2,13 +2,13 @@ Mode = 'normal';
 
 
 function ccolorizeSong(ColorizingTarget) {
-	var PreviousSongList = document.getElementsByClassName("warning");
+	var PreviousSongList = document.getElementsByClassName("table-success");
     if (PreviousSongList.length > 0) {
-      	PreviousSongList[0].className = "success";
-       	ColorizingTarget.parentNode.className = "warning";
+      	PreviousSongList[0].className = "table-default";
+       	ColorizingTarget.parentNode.className = "table-success";
 	}
 	else{
-       	ColorizingTarget.parentNode.className = "warning";
+       	ColorizingTarget.parentNode.className = "table-success";
 	}
 }
 

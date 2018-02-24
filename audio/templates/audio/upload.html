@@ -8,9 +8,7 @@
                 <form action="/music/upload/" method="post" class="form" enctype="multipart/form-data">
                     {% csrf_token %}
                     {% if form.file %}
-                    <label class="btn btn-default btn-file">
-                    Обзор {% render_field form.file style="display: none;" %}
-                    </label>
+                    <label class="btn btn-secondary">Обзор{% render_field form.file style="display: none;" %}</label>
                     {% else %}
                     {{ form.as_p }}
                     {% endif %}
