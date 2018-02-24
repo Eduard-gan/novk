@@ -4,7 +4,7 @@ function ajax_add_to_playlist(_instance) {
     var csrf_token = $('[name=csrfmiddlewaretoken]').val();
 
     $.ajax({
-        url:'http://127.0.0.1:8000/music/ajax/playlist_operations/',
+        url:'https://novk.tk/music/ajax/playlist_operations/',
         type:'POST',
         headers: {"X-CSRFToken": csrf_token},
         data: {
