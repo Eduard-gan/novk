@@ -4,7 +4,7 @@ from django.db import models
 def upload_destination(instance, filename):
     from uuid import uuid4
 
-    return 'audio/{}'.format(uuid4())
+    return 'pictures/{}'.format(uuid4())
 
 
 class Picture(models.Model):
