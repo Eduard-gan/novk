@@ -20,6 +20,8 @@ INSTALLED_APPS = [
     'audio',
     'widget_tweaks',
     'debug_toolbar',
+    'diary',
+    'pictures',
 ]
 
 MIDDLEWARE = [

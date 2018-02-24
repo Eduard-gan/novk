@@ -18,7 +18,7 @@ class Song(models.Model):
     track = models.IntegerField(null=True, blank=True)
     genre = models.ForeignKey(Genre, on_delete=models.PROTECT, blank=True, null=True)
     file = models.FileField(upload_to='audio')
-    # uploaded = models.DateField()                                                       TODO Music-history key element
+    uploaded = models.DateField(auto_now_add=True)
 
     def __str__(self):
         return self.artist + ' - ' + self.title
