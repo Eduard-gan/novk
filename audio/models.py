@@ -37,8 +37,8 @@ class PlaylistQuerySet(models.QuerySet):
 class Playlist(models.Model):
     name = models.CharField(max_length=32, default='Медиатека')
     number = models.IntegerField()
-    user = models.ForeignKey(User)
-    song = models.ForeignKey(Song, null=True, blank=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    song = models.ForeignKey(Song, null=True, blank=True, on_delete=models.PROTECT)
 
     objects = PlaylistQuerySet.as_manager()
 

@@ -6,7 +6,7 @@ from pictures.models import Picture
 
 
 class DiaryPage(models.Model):
-    owner = models.ForeignKey(User)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE)
     created = models.DateTimeField(auto_now_add=True)
     text = models.CharField(max_length=4096, blank=True)
     pictures = models.ManyToManyField(Picture, blank=True)

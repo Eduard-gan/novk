@@ -61,11 +61,15 @@ def convert_to_unicode(possible_cp1251_string):
 @login_required
 def music(request):
 
-    # Получаем текущий плэйлист из параметров GET'а. Если их нет - используем дефолтный.
+    # Получаем текущий плэйлист из параметров GET'а. Если их нет - используем или создаем дефолтный.
     try:
         current_playlist = int(request.GET['playlist'])
     except KeyError:
-        current_playlist = 0
+        current_playlist = Playlist.objects.filter(number=0, user=request.user)
+        if current_playlist:
+            current_playlist = current_playlist[0].number
+        else:
+            current_playlist = Playlist.objects.create(number=0, user=request.user).number
 
     # Определение набора песен в плэйлисте
     songs = Song.objects.filter(playlist__user=request.user, playlist__number=current_playlist).order_by('-id')
