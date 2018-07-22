@@ -3,6 +3,7 @@ from django.conf.urls import url
 from django.contrib import admin
 from django.conf.urls import include
 from django.contrib.auth import views as auth_views
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.views.generic.base import RedirectView
 from django.urls import reverse_lazy
 from novk import views as core_views
@@ -18,3 +19,5 @@ urlpatterns = [
     url(r'^__debug__/', include(debug_toolbar.urls)),
     url(r'^$', RedirectView.as_view(url='music/', permanent=False)),
 ]
+
+urlpatterns += staticfiles_urlpatterns()

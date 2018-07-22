@@ -1,5 +1,11 @@
 import os
 
+try:
+    import psycopg2
+except ImportError:
+    from psycopg2cffi import compat
+    compat.register()
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # SECURITY WARNING: keep the secret key used in production secret!
@@ -8,7 +14,7 @@ SECRET_KEY = '8v474ofn_%^m@%#8k^-7g&5!hf%4!bgpii(y400549an3k+(_4'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['testserver', 'novk.tk', '127.0.0.1']
+ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -19,9 +25,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'audio',
     'widget_tweaks',
-    # 'debug_toolbar',
-    'diary',
-    'pictures',
+    'debug_toolbar',
+    #'diary',
+    #'pictures',
 ]
 
 MIDDLEWARE = [
@@ -30,7 +36,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    # 'debug_toolbar.middleware.DebugToolbarMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -96,6 +102,6 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 MEDIA_URL = '/static/uploaded/'
 MEDIA_ROOT = os.path.join(STATIC_ROOT, 'uploaded')
 
-INTERNAL_IPS = ('127.0.0.1',)
+INTERNAL_IPS = ('127.0.0.1','0.0.0.0')
 
 CSRF_USE_SESSIONS = True
