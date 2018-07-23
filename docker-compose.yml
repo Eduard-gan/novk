@@ -13,6 +13,8 @@ services:
      - "80:80"
      - "443:443"
      - "9090:9090"
+    volumes:
+    - ./static:/var/www/novk/static
 
   postgres:
     build: dockerfiles/postgres/.
