@@ -1,0 +1,2 @@
+[prod]
+novk.tk ansible_ssh_user=root

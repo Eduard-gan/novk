@@ -26,3 +26,9 @@ python novk/manage.py collectstatic
 3) Check and clean
 rm -r /var/www/env/novk_old
 exit
+
+## New Deployment
+ -- 
+docker-compose up -d --build
+ --
+ansible-playbook ansible/prod-deploy.yml -i ansible/hosts
