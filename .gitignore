@@ -3,4 +3,7 @@ db.sqlite3
 
 # Python cache files
 *.pyc
-.idea
+.idea/
+static/
+!static/uploaded/audio/.gitignore
+!static/uploaded/temp/.gitignore

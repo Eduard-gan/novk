@@ -1,30 +1,35 @@
 version: '3'
 services:
   gunicorn:
+    container_name: novk_g
     restart: always
     build: .
     depends_on:
      - "postgres"
     ports:
      - "8000:8000"
+    env_file: global_env
     volumes:
-     - ./static:/root/novk/static
+     - /var/novk/static:/root/novk/static
 
   cherokee:
+    container_name: novk_c
+    restart: always
     build: dockerfiles/cherokee/.
     ports:
      - "80:80"
      - "443:443"
      - "9090:9090"
+    env_file: global_env
     volumes:
-    - ./static:/var/www/novk/static
+    - /var/novk/static:/var/www/novk/static
 
   postgres:
+    container_name: novk_p
+    restart: always
     build: dockerfiles/postgres/.
     ports:
      - "5432:5432"
-    environment:
-     - POSTGRES_PASSWORD:'novk'
-     - POSTGRES_DB:'novk'
+    env_file: global_env
     volumes:
-     - ./data/postgres:/var/lib/postgresql/data
+     - /var/novk/database:/var/lib/postgresql/data

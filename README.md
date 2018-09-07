@@ -35,6 +35,6 @@ DOCKER :
  - DEPLOY:
         docker-compose up -d --build
  - AFTER DEPLOY:
-        docker exec novk_gunicorn_1 pipenv run ./manage.py migrate
-        docker exec novk_gunicorn_1 pipenv run ./manage.py collectstatic --no-input
-        docker exec novk_gunicorn_1 pipenv run ./manage.py shell -c "from django.contrib.auth.models import User; User.objects.create_superuser('root', 'root@novk.tk', 'lolkekpass')"
+        docker exec novk_g pipenv run ./manage.py migrate
+        docker exec novk_g pipenv run ./manage.py collectstatic --no-input
+        docker exec novk_g pipenv run ./manage.py shell -c "from django.contrib.auth.models import User; User.objects.create_superuser('root', 'root@novk.tk', 'lolkekpass')"

@@ -1,0 +1,3 @@
+POSTGRES_DB=novk
+POSTGRES_PASSWORD=novk
+DJANGO_SECRET_KEY=8v474ofn_%^m@%#8k^-7g&5!hf%4!bgpii(y400549an3k+(_4
