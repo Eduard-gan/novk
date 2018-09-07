@@ -10,14 +10,14 @@ class Genre(models.Model):
 
 
 class Song(models.Model):
-    title = models.CharField(max_length=64)
-    artist = models.CharField(max_length=64)
-    album = models.CharField(max_length=64, blank=True)
+    title = models.CharField(max_length=256)
+    artist = models.CharField(max_length=256)
+    album = models.CharField(max_length=256, blank=True)
     year = models.IntegerField(null=True, blank=True)
     comment = models.CharField(max_length=32, blank=True)
     track = models.IntegerField(null=True, blank=True)
     genre = models.ForeignKey(Genre, on_delete=models.PROTECT, blank=True, null=True)
-    file = models.FileField(upload_to='audio')
+    file = models.FileField(upload_to='audio', max_length=512)
     uploaded = models.DateField(auto_now_add=True)
 
     def __str__(self):

@@ -1,7 +1,10 @@
 version: '3'
 services:
   gunicorn:
+    restart: always
     build: .
+    depends_on:
+     - "postgres"
     ports:
      - "8000:8000"
     volumes:
@@ -20,5 +23,8 @@ services:
     build: dockerfiles/postgres/.
     ports:
      - "5432:5432"
+    environment:
+     - POSTGRES_PASSWORD:'novk'
+     - POSTGRES_DB:'novk'
     volumes:
      - ./data/postgres:/var/lib/postgresql/data

@@ -5,7 +5,6 @@ WORKDIR /root
 COPY . novk
 WORKDIR novk
 RUN pipenv install
-RUN pipenv run ./manage.py migrate
 
 EXPOSE 8000
 

@@ -4,22 +4,14 @@ verify_ssl = true
 name = "pypi"
 
 [dev-packages]
+ansible = "*"
 
 [requires]
 
 [packages]
-certifi = "==2018.4.16"
-chardet = "==3.0.4"
-django-debug-toolbar = "==1.9.1"
-django-widget-tweaks = "==1.4.2"
-idna = "==2.6"
-mutagen = "==1.40.0"
-olefile = "==0.45.1"
-pytz = "==2018.4"
-requests = "==2.18.4"
-sqlparse = "==0.2.4"
-"urllib3" = "==1.22"
-Django = "==2.0.4"
-Pillow = "==5.1.0"
+django-debug-toolbar = "*"
+django-widget-tweaks = "*"
+mutagen = "*"
+Django = "*"
 gunicorn = "*"
-psycopg2cffi = "*"
+"psycopg2cffi" = "*"
