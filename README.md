@@ -1,7 +1,7 @@
 # novk
 Rebel anti-VK project
 
-# New Deployment:
+# Deployment:
  - First of all add your deploying user's public key to root's authorized keys on deployment target computer.
  - Install Docker on it: https://docs.docker.com/install/linux/docker-ce/debian/
  - Install docker-compose(Not from pip, Ansible won't see it :( ):  
