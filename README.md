@@ -14,5 +14,6 @@ Rebel anti-VK project
     `pipenv run ansible-playbook ansible/prod-deploy.yml -i ansible/hosts`
      - Or run it on your local macine  
     `pipenv run ansible-playbook ansible/local-deploy.yml -i ansible/hosts`
+    ### FIXME: Run twice because of too slo postgres start. 
      - To clean up:  
     `docker-compose down --rmi local && sudo rm -fr /var/novk`
