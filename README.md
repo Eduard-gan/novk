@@ -9,6 +9,7 @@ Rebel anti-VK project
  - Setup deploying computer(probably your dev PC)  
     `git clone https://github.com/Eduard-gan/novk.git && cd novk`  
     `pipenv install --dev`
+     - Edit novk/global_env file for secure custom keys and passwords
      - Deploy project on server  
     `pipenv run ansible-playbook ansible/prod-deploy.yml -i ansible/hosts`
      - Or run it on your local macine  
