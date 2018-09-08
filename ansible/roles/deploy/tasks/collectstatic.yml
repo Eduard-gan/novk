@@ -1,0 +1,7 @@
+- name: Staticfiles management
+  command: "docker exec novk_g pipenv run ./manage.py collectstatic --no-input"
+  register: collectstatic_output
+
+- debug:
+    var: collectstatic_output
+

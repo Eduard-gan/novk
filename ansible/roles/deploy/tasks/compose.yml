@@ -1,0 +1,9 @@
+- name: Build and start containers
+  docker_service:
+    project_src: /srv/novk
+    build: yes
+    state: present
+  register: compose_out
+
+- debug:
+    var: compose_out

@@ -1,0 +1,7 @@
+- name: Clone repository to host.
+  git:
+    repo: https://github.com/Eduard-gan/novk.git
+    dest: /srv/novk
+    version: master
+    accept_hostkey: yes
+

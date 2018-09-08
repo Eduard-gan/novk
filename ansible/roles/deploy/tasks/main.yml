@@ -1,3 +1,21 @@
 - name: Main deployment role
   include_tasks: ping.yml
 
+- name: Version control task
+  include_tasks: clone_repository.yml
+
+- name: Pre-deploy permission relexation for existing persistent data.
+  include_tasks: data_permission_relax.yml
+
+- name: Compose containers
+  include_tasks: compose.yml
+
+- name: Apply Django migrations
+  include_tasks: migrations.yml
+
+- name: Launch collectstatic Django-command
+  include_tasks: collectstatic.yml
+
+- name: Launch createsuperuser Django-command
+  include_tasks: createsuperuser.yml
+

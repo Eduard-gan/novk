@@ -1,0 +1,8 @@
+- name: Superuser creation
+  command: "docker exec novk_g pipenv run ./manage.py shell -c \"from django.contrib.auth.models import User; User.objects.create_superuser('root', 'root@novk.tk', 'weak_password')\""
+  ignore_errors: yes
+  register: createsuperuser_output
+
+- debug:
+    var: createsuperuser_output.stderr_lines
+
