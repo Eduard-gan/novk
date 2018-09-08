@@ -15,4 +15,4 @@ Rebel anti-VK project
      - Or run it on your local macine  
     `pipenv run ansible-playbook ansible/local-deploy.yml -i ansible/hosts`
      - To clean up:  
-    `docker-compose down --rmi local ; sudo rm -fr /var/novk`
+    `docker-compose down --rmi local && sudo rm -fr /var/novk`
