@@ -17,3 +17,8 @@ Rebel anti-VK project
     ### FIXME: Run twice because of too slo postgres start. 
      - To clean up:  
     `docker-compose down --rmi local && sudo rm -fr /var/novk`
+
+
+## Build problems:
+On Arch linux to pip install psycopg2cffi you need to:
+ - sudo pacman -S postgresql-libs
