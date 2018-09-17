@@ -22,3 +22,7 @@ Rebel anti-VK project
 ## Build problems:
 On Arch linux to pip install psycopg2cffi you need to:
  - sudo pacman -S postgresql-libs
+
+## Running outside of Docker
+ - pyenv install pypy-3.5-6.0.0
+ - pipenv install --python pypy-3.5-6.0.0
