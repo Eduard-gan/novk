@@ -1,21 +1,28 @@
 import os
+from psycopg2cffi import compat
+compat.register()
+
 
 try:
-    import psycopg2
-except ImportError:
-    from psycopg2cffi import compat
-    compat.register()
+    import environ
+    env = environ.Env()
+    environ.Env.read_env(env_file='global_env')
+except Exception:
+    raise ImproperlyConfigured('Error in settings.py: Unexpected error in "django-environ" package section')
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ['DJANGO_SECRET_KEY']
+try:
+    SECRET_KEY = os.environ['DJANGO_SECRET_KEY']
+except KeyError:
+    SECRET_KEY = env('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'novk.tk']
-INTERNAL_IPS = ('127.0.0.1',)  # Для debug-toolbar
+INTERNAL_IPS = ('127.0.0.1',)
 
 INSTALLED_APPS = [
     'django.contrib.admin',

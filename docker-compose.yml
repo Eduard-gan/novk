@@ -22,7 +22,9 @@ services:
      - "9090:9090"
     env_file: global_env
     volumes:
-    - /var/novk/static:/var/www/novk/static
+     - /var/novk/static:/var/www/novk/static
+     - /var/novk/ssl/.well-known:/var/www/novk/ssl/.well-known
+     - /etc/letsencrypt/live/novk.tk/:/var/www/novk/ssl/keys
 
   postgres:
     container_name: novk_p

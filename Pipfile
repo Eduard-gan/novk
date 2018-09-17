@@ -7,6 +7,7 @@ name = "pypi"
 ansible = "*"
 
 [requires]
+python_version = "pypy3"
 
 [packages]
 django-debug-toolbar = "*"
@@ -15,3 +16,4 @@ mutagen = "*"
 Django = "*"
 gunicorn = "*"
 "psycopg2cffi" = "*"
+django-environ = "*"
