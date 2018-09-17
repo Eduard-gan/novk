@@ -25,4 +25,4 @@ On Arch linux to pip install psycopg2cffi you need to:
 
 ## Running outside of Docker
  - pyenv install pypy-3.5-6.0.0
- - pipenv install --python pypy-3.5-6.0.0
+ - pipenv install --python pypy3
