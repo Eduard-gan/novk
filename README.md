@@ -26,3 +26,7 @@ On Arch linux to pip install psycopg2cffi you need to:
 ## Running outside of Docker
  - pyenv install pypy-3.5-6.0.0
  - pipenv install --python pypy3
+
+## Certbot on server:
+ - certbot certonly --webroot -w /var/novk/ssl -d novk.tk
+ ### FIXME Certbot will generate symlinks in live direcrtory. Cherokee needs real files, not symlinks in current setup.
