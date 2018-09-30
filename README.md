@@ -2,7 +2,7 @@
 Rebel anti-VK project
 
 # Deployment:
- - ### FIXME: Learn to bulid images (or even autobuilds) and publish it on dockerhub. In deploy well only need to pull em, not build because building on production server takes 40 min....
+ - ### FIXME: Learn to bulid images (or even autobuilds) and publish it on dockerhub. On deploy we'll only need to pull em, not build because building on production server takes 40 min....
  - Put your deploying user's public key to root's authorized keys on deployment target computer.
  - Install Docker on it: https://docs.docker.com/install/linux/docker-ce/debian/
  - And docker-compose as well:  
@@ -15,7 +15,7 @@ Rebel anti-VK project
     `pipenv run ansible-playbook ansible/prod-deploy.yml -i ansible/hosts`
      - Or run it on your local macine  
     `pipenv run ansible-playbook ansible/local-deploy.yml -i ansible/hosts`
-    ### FIXME: Run twice because of too slo postgres start. 
+    ### FIXME: Run twice because of too slow postgres start. 
      - To clean up:  
     `docker-compose down --rmi local && sudo rm -fr /var/novk`
 
@@ -29,5 +29,4 @@ On Arch linux to pip install psycopg2cffi you need to:
  - pipenv install --python pypy3
 
 ## Certbot on server:
- - certbot certonly --webroot -w /var/novk/ssl -d novk.tk
- ### FIXME: Certbot will generate symlinks in live direcrtory. Cherokee needs real files, not symlinks in current setup.
+ - certbot certonly --webroot -w /var/novk/ssl -d novk.ga
