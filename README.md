@@ -6,7 +6,7 @@ Rebel anti-VK project
  - Put your deploying user's public key to root's authorized keys on deployment target computer.
  - Install Docker on it: https://docs.docker.com/install/linux/docker-ce/debian/
  - And docker-compose as well:  
-    `pip install docker-compose`
+    `pip install docker-compose` # WARNING USE EXPLICITLY PIP2 AND WATCH IT INSTALLS docker package in /usr/local/lib/dist-packages/docker
  - Setup deploying computer(probably your dev PC)  
     `git clone https://github.com/Eduard-gan/novk.git && cd novk`  
     `pipenv install --dev`
