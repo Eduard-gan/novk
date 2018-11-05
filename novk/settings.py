@@ -21,7 +21,7 @@ except KeyError:
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'novk.tk']
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'novk.ga']
 INTERNAL_IPS = ('127.0.0.1',)
 
 INSTALLED_APPS = [
