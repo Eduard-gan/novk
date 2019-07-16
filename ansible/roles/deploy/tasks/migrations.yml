@@ -1,5 +1,5 @@
 - name: Apply all migrations
-  command: "docker exec novk_g pipenv run ./manage.py migrate"
+  command: "docker exec novk_g python ./manage.py migrate"
   register: migrate_output
 
 - debug:
