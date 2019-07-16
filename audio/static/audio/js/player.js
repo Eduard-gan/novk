@@ -34,7 +34,7 @@ function clickWrapper(ChosenSong) {
 function getSongPath( SongID ) {
 	var Song = document.getElementById(SongID);
 	var ReturningPath = Song.getAttribute("data-path");
-	ReturningPath = ReturningPath.replace( /^/ , "/static/uploaded/" );
+	ReturningPath = ReturningPath.replace( /^/ , "/uploaded/" );
     return( ReturningPath );
 }
 
