@@ -1,13 +1,9 @@
-FROM pypy:3
+FROM python:3.7.4
 
-RUN pip install pipenv
-WORKDIR /root
-COPY . novk
-WORKDIR novk
-RUN pipenv install
+COPY . /root/novk
+WORKDIR /root/novk
+
+RUN pip install -r re
 
 EXPOSE 8000
-
-
-ENTRYPOINT ["/usr/local/bin/pipenv"]
-CMD ["run", "gunicorn", "novk.wsgi", "-b", "0.0.0.0:8000", "--log-level", "debug", "--log-file", "/var/log/gunicorn.log"]
+ENTRYPOINT ["gunicorn", "novk.wsgi", "-b", "0.0.0.0:8000", "--log-level", "debug", "--log-file", "/var/log/gunicorn.log"]
