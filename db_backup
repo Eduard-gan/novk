@@ -1,0 +1,29 @@
+#! /usr/bin/python3
+import datetime
+import os
+import sys
+from pathlib import Path
+
+
+modes = ("b", "r")
+mode = sys.argv[1]
+assert mode in modes, "mode {} in not in availible modes: {}".format(mode, modes)
+print("STARTING IN {} MODE...".format("BACKUP" if mode == "b" else "RECOVERY"))
+
+file_name = "novk_database_backup_{}".format(datetime.datetime.now().strftime("%Y-%m-%d-%H_%M_%S"))
+full_path = str(Path.home() / file_name) + ".tar.gz"
+
+containers = ("novk_c", "novk_g", "novk_p")
+
+print("Shutting down containers: {}".format(containers))
+os.system("docker stop {}".format(" ".join(containers)))
+
+if mode == "b":
+    print("Backig up database to file: {}".format(file_name))
+    os.system("tar -czf {} /var/novk/database".format(file_name))
+else:
+    print("Restoring database from file: {}".format("Dont know how to deal with filenames during recovery so pass"))
+
+print("Starting containers back: {}".format(tuple(reversed(containers))))
+os.system("docker start {}".format(" ".join(reversed(containers))))
+print("{} FINISHED.".format("BACKUP" if mode == "b" else "RECOVERY"))
