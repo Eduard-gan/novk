@@ -31,9 +31,9 @@ On Arch linux to pip install psycopg2cffi you need to:
 ## Certbot on server:
 
 ## If Cherokee is not working without cert
- - mkdir -p /etc/letsencrypt/live/novk.ga
- - openssl req -new -x509 -days 365 -nodes -out /etc/letsencrypt/live/novk.ga/fullchain.pem -keyout /etc/letsencrypt/live/novk.ga/privkey.pem
+ - mkdir -p /etc/letsencrypt/live/novk.site
+ - openssl req -new -x509 -days 365 -nodes -out /etc/letsencrypt/live/novk.site/fullchain.pem -keyout /etc/letsencrypt/live/novk.site/privkey.pem
  
 ## Get real cert with Cherokee
  - pip install certbot
- - certbot certonly --webroot -w /var/novk/ssl -d novk.ga
+ - certbot certonly --webroot -w /var/novk/ssl -d novk.site
