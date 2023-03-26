@@ -1,25 +1,19 @@
 import os
+from django.core.exceptions import ImproperlyConfigured
+import environ
 
-
-try:
-    import environ
-    env = environ.Env()
-    environ.Env.read_env(env_file='global_env')
-except Exception:
-    raise ImproperlyConfigured('Error in settings.py: Unexpected error in "django-environ" package section')
+env = environ.Env()
+environ.Env.read_env(env_file='global_env')
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # SECURITY WARNING: keep the secret key used in production secret!
-try:
-    SECRET_KEY = os.environ['DJANGO_SECRET_KEY']
-except KeyError:
-    SECRET_KEY = env('SECRET_KEY')
+SECRET_KEY = env('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = eval(env('DEBUG'))
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'novk.online']
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', env('DOMAIN')]
 INTERNAL_IPS = ('127.0.0.1',)
 
 INSTALLED_APPS = [
@@ -72,10 +66,10 @@ DATABASES = {
     # }
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'HOST': 'postgres',
-        'USER': 'postgres',
-        'PASSWORD': os.environ['POSTGRES_PASSWORD'],
-        'NAME': os.environ['POSTGRES_DB'],
+        'HOST': env('POSTGRES_HOST'),
+        'USER': env('POSTGRES_USER'),
+        'PASSWORD': env('POSTGRES_PASSWORD'),
+        'NAME': env('POSTGRES_DB'),
     }
 }
 
