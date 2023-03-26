@@ -2,3 +2,4 @@
 .idea/
 *.retry
 static
+global_env
