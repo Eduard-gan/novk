@@ -1,5 +1,5 @@
 - name: Build and start containers
-  docker_service:
+  docker_compose:
     project_src: /srv/novk
     build: yes
     state: present
