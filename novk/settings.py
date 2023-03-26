@@ -14,6 +14,7 @@ SECRET_KEY = env('SECRET_KEY')
 DEBUG = eval(env('DEBUG'))
 
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost', env('DOMAIN')]
+CSRF_TRUSTED_ORIGINS = [f"https://{env('DOMAIN')}",]
 INTERNAL_IPS = ('127.0.0.1',)
 
 INSTALLED_APPS = [
