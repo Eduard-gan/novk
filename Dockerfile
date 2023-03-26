@@ -16,5 +16,5 @@ WORKDIR /root/novk
 
 EXPOSE 8000
 #ENTRYPOINT ["gunicorn", "novk.wsgi", "-b", "0.0.0.0:8000", "--log-file", "/var/log/gunicorn.log"]
-ENTRYPOINT ["gunicorn", "novk.asgi", "-b", "0.0.0.0:8000", "-k", "uvicorn.workers.UvicornWorker", "--log-file", "/var/log/gunicorn.log"]
+ENTRYPOINT ["gunicorn", "novk.asgi", "-b", "0.0.0.0:8000", "-k", "uvicorn.workers.UvicornWorker", "--log-level", "debug", "--log-file", "/var/log/gunicorn.log"]
 #CMD ["tail", "-f", "/dev/null"]
