@@ -1,5 +1,5 @@
 DEBUG=True
-DOMAIN=novk.online
+DOMAIN=novk.localplayer.dev
 POSTGRES_HOST=postgres
 POSTGRES_USER=postgres
 POSTGRES_DB=novk
