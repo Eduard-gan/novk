@@ -5,3 +5,11 @@ POSTGRES_USER=postgres
 POSTGRES_DB=novk
 POSTGRES_PASSWORD=novk
 SECRET_KEY=8v474ofn_%^m@%#8k^-7g&5!hf%4!bgpii(y400549an3k+(_4
+
+
+DEV_HOSTNAME=novk.localplayer.dev
+DEV_USER=user
+DEV_PROJECT_DIR=/srv
+
+AUDIO_DIR=audio
+SECURE_ACCESS_TOKEN=False

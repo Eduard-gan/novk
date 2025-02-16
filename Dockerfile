@@ -1,4 +1,4 @@
-FROM python:3.11.2
+FROM python:3.11.11
 
 RUN python -m pip install pipx
 RUN pipx install poetry==1.4.0

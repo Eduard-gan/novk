@@ -35,3 +35,15 @@ services:
     env_file: global_env
     volumes:
      - /var/novk/database:/var/lib/postgresql/data
+
+  reflex:
+    container_name: novk_r
+    restart: always
+    build:
+      context: .
+      dockerfile: dockerfiles/reflex/Dockerfile
+    ports:
+     - "9000:9000"
+    env_file: global_env
+    volumes:
+     - /var/novk/static:/root/novk/static

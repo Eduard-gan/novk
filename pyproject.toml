@@ -6,7 +6,7 @@ authors = ["Eduard Gan <eduard.gan@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.11.2"
+python = "^3.11.11"
 
 
 django = {version = "4.2rc1", allow-prereleases = true}
