@@ -13,7 +13,7 @@ Rebel anti-VK project
      - Edit novk/global_env file for secure custom keys and passwords
      - Deploy project on server  
     `pipenv run ansible-playbook ansible/prod-deploy.yml -i ansible/hosts`
-     - Or run it on your local macine  
+     - Or run it on your local machine  
     `pipenv run ansible-playbook ansible/local-deploy.yml -i ansible/hosts`
     ### FIXME: Run twice because of too slow postgres start. 
      - To clean up:  
@@ -31,9 +31,9 @@ On Arch linux to pip install psycopg2cffi you need to:
 ## Certbot on server:
 
 ## If Cherokee is not working without cert
- - mkdir -p /etc/letsencrypt/live/novk.online
- - openssl req -new -x509 -days 365 -nodes -out /etc/letsencrypt/live/novk.online/fullchain.pem -keyout /etc/letsencrypt/live/novk.online/privkey.pem
+ - mkdir -p /etc/letsencrypt/live/novk.localplayer.dev
+ - openssl req -new -x509 -days 365 -nodes -out /etc/letsencrypt/live/novk.localplayer.dev/fullchain.pem -keyout /etc/letsencrypt/live/novk.localplayer.dev/privkey.pem
  
 ## Get real cert with Cherokee
  - pip install certbot
- - certbot certonly --webroot -w /var/novk/ssl -d novk.online
+ - certbot certonly --webroot -w /var/novk/ssl -d novk.localplayer.dev
