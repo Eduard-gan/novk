@@ -2,7 +2,7 @@ import reflex as rx
 
 from novk_reflex import api
 # from novk_reflex import pages
-from novk_reflex.state import IndexState
+# from novk_reflex.state import IndexState
 import logging
 from fastapi import Request
 from time import time
