@@ -1,4 +1,4 @@
-FROM python:3.11.11
+FROM python:3.11.2
 
 # Устанавливаем pipx и Poetry
 RUN python -m pip install pipx
