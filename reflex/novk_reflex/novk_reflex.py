@@ -1,7 +1,7 @@
 import reflex as rx
 
 from novk_reflex import api
-from novk_reflex import pages
+# from novk_reflex import pages
 from novk_reflex.state import IndexState
 import logging
 from fastapi import Request
@@ -36,7 +36,7 @@ async def log_request_middleware(request: Request, call_next):
 
 
 app = rx.App()
-app.add_page(pages.index, on_load=IndexState.get_songs)
+# app.add_page(pages.index, on_load=IndexState.get_songs)
 app.api.add_api_route(path="/api/song", endpoint=api.add_song, methods=["POST"])
 app.api.add_api_route(path="/api/auth/token", endpoint=api.get_token, methods=["POST"])
 app.api.middleware("http")(log_request_middleware)
