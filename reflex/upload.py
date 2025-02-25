@@ -5,7 +5,7 @@ session = requests.Session()
 
 # Авторизация
 session.post(
-    url="http://localhost:8000/api/auth/token",
+    url="https://novk.localplayer.dev/api/auth/token",
     headers={"Content-Type": "application/json", "accept": "application/json"},
     json={"username": "root", "password": "ecc14a9t"},
 )
