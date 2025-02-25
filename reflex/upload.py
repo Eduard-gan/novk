@@ -18,7 +18,7 @@ for path in sorted(files_dir.iterdir(), reverse=True):
     _, artist, title = path.name.split(" - ")
     with open(path, "rb") as file:
         response = session.post(
-            url="http://localhost:8000/api/song",
+            url="https://novk.localplayer.dev/api/song",
             headers={"accept": "application/json"},
             data={"title": title, "artist": artist, "user_id": "1", "playlist_id": "0"},
             files={"file": (path.name + ".mp3", file, "audio/mpeg")},
