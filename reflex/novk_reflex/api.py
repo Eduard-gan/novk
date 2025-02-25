@@ -109,7 +109,8 @@ async def add_song(
     file_contents = await file.read()
     extension = file.filename.split(".")[1]
     full_file_name = f"{uuid4()}.{extension}"
-    path = Path(rx.config.get_config().audio_dir) / Path(full_file_name)
+    dir = Path(rx.config.get_config().audio_dir)
+    path = dir / Path(full_file_name)
 
     # 1
     with open(path, "wb+") as f:
@@ -117,7 +118,7 @@ async def add_song(
 
     with rx.session() as session:
         # 2
-        song = Song(title=title, artist=artist, genre_id=1, file=str(path))
+        song = Song(title=title, artist=artist, genre_id=1, file=str(path.relative_to(dir.parent)))
         session.add(song)
         session.flush()
         # 3
