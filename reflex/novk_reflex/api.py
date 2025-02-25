@@ -115,14 +115,14 @@ async def add_song(
     with open(path, "wb+") as f:
         f.write(file_contents)
 
-    with rx.session() as session:
-        # 2
-        song = Song(title=title, artist=artist, genre_id=1, file=str(path))
-        session.add(song)
-        session.flush()
-        # 3
-        playlist = Playlist(number=playlist_id, song_id=song.id, user_id=user_id, name="Медиатека")
-        session.add(playlist)
-        session.commit()
-
-    return dict(song=song, playlist=playlist)
+    # with rx.session() as session:
+    #     # 2
+    #     song = Song(title=title, artist=artist, genre_id=1, file=str(path))
+    #     session.add(song)
+    #     session.flush()
+    #     # 3
+    #     playlist = Playlist(number=playlist_id, song_id=song.id, user_id=user_id, name="Медиатека")
+    #     session.add(playlist)
+    #     session.commit()
+    #
+    # return dict(song=song, playlist=playlist)
