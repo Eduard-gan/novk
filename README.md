@@ -35,9 +35,9 @@ On Arch linux to pip install psycopg2cffi you need to:
  - openssl req -new -x509 -days 365 -nodes -out /etc/letsencrypt/live/novk.localplayer.dev/fullchain.pem -keyout /etc/letsencrypt/live/novk.localplayer.dev/privkey.pem
 
 ## How to get access to cherokee admin interface
- - On a remote server: docker exec -it novk_g bash
+ - On a local machine: ssh -L 9090:localhost:9090 root@novk.localplayer.dev
+ - On a remote server: docker exec -it novk_c bash
  - On a remote server: cherokee-admin -b -C /etc/cherokee.conf
- - On a local machine: ssh -N -L 9090:localhost:9090 root@novk.localplayer.dev
  - http://localhost:9090 should give access to admin interface with onetime password displayed oan a console in step 2 
  
 ## Get real cert with Cherokee

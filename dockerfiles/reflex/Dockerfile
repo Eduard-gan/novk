@@ -28,4 +28,4 @@ WORKDIR /root/reflex
 EXPOSE 9000
 
 # Запускаем Reflex
-ENTRYPOINT ["reflex", "run", "--backend-port", "9000", "--env", "prod", "--backend-only"]
+ENTRYPOINT ["reflex", "run", "--backend-port", "9000", "--env", "prod", "--backend-only", "--loglevel", "debug"]
