@@ -1,0 +1,12 @@
+.git
+.idea
+.env
+*.env
+target
+debug
+data
+novk.sqlite
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+uploaded

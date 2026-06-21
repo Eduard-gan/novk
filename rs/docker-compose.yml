@@ -1,0 +1,20 @@
+services:
+  novk:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: novk:latest
+    container_name: novk
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      LOCO_ENV: production
+      BINDING: 0.0.0.0
+      PORT: 5150
+      DATABASE_URL: sqlite:///mnt/novk-data/data/novk/novk.sqlite?mode=rwc
+      TZ: Europe/Belgrade
+    ports:
+      - "127.0.0.1:5150:5150"
+    volumes:
+      - /mnt/novk-data:/mnt/novk-data

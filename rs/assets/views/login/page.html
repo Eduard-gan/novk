@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ app_name }} - вход</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #101112;
+        --panel: #191b1d;
+        --panel-border: #2b2f33;
+        --text: #f3f1ec;
+        --muted: #a7a29a;
+        --accent: #d6ff66;
+        --accent-strong: #b8e84f;
+        --danger: #ff7a7a;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        min-height: 100vh;
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+      }
+
+      main {
+        min-height: 100vh;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
+      }
+
+      .brand {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 100vh;
+        padding: 40px;
+        background:
+          linear-gradient(rgba(16, 17, 18, 0.35), rgba(16, 17, 18, 0.95)),
+          url("/static/image.png") center / cover;
+      }
+
+      .brand-name {
+        margin: 0;
+        font-size: 56px;
+        line-height: 1;
+        font-weight: 800;
+        letter-spacing: 0;
+      }
+
+      .brand-caption {
+        max-width: 560px;
+        margin: 24px 0 0;
+        color: var(--muted);
+        font-size: 18px;
+        line-height: 1.5;
+      }
+
+      .login-pane {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        padding: 32px;
+        border-left: 1px solid var(--panel-border);
+        background: var(--panel);
+      }
+
+      .login-form {
+        width: 100%;
+      }
+
+      .login-form h1 {
+        margin: 0 0 8px;
+        font-size: 28px;
+        line-height: 1.2;
+        font-weight: 700;
+        letter-spacing: 0;
+      }
+
+      .login-form p {
+        margin: 0 0 28px;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+
+      label {
+        display: block;
+        margin: 0 0 8px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      input {
+        width: 100%;
+        height: 44px;
+        margin: 0 0 18px;
+        padding: 0 12px;
+        border: 1px solid var(--panel-border);
+        border-radius: 6px;
+        background: #101214;
+        color: var(--text);
+        font: inherit;
+      }
+
+      input:focus {
+        outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
+        outline-offset: 1px;
+        border-color: var(--accent);
+      }
+
+      button {
+        width: 100%;
+        height: 44px;
+        border: 0;
+        border-radius: 6px;
+        background: var(--accent);
+        color: #15180d;
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background: var(--accent-strong);
+      }
+
+      .form-note {
+        margin-top: 18px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      @media (max-width: 760px) {
+        main {
+          grid-template-columns: 1fr;
+        }
+
+        .brand {
+          min-height: 34vh;
+          padding: 28px;
+        }
+
+        .brand-name {
+          font-size: 42px;
+        }
+
+        .brand-caption {
+          font-size: 16px;
+        }
+
+        .login-pane {
+          min-height: auto;
+          border-left: 0;
+          border-top: 1px solid var(--panel-border);
+          padding: 28px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="brand" aria-label="{{ app_name }}">
+        <div>
+          <h1 class="brand-name">{{ app_name }}</h1>
+          <p class="brand-caption">Личная медиатека без внешних сервисов и лишних аккаунтов.</p>
+        </div>
+      </section>
+
+      <section class="login-pane">
+        <form class="login-form" method="post" action="/login">
+          <h1>Вход</h1>
+          <p>Доступ к музыкальной библиотеке.</p>
+
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" autocomplete="email" required>
+
+          <label for="password">Пароль</label>
+          <input id="password" name="password" type="password" autocomplete="current-password" required>
+
+          <button type="submit">Войти</button>
+          <div class="form-note">Регистрация отключена.</div>
+        </form>
+      </section>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>NOVK Music</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.8/dist/darkly/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+    <style>
+      audio.pinned {
+        position: sticky;
+        top: 0;
+        z-index: 1030;
+        display: block;
+        width: 100%;
+        height: 54px;
+        background: #000;
+      }
+
+      .page {
+        padding: 1rem;
+      }
+
+      .toolbar {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: .75rem;
+      }
+
+      .actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: .5rem;
+      }
+
+      .track-table {
+        margin-top: 1rem;
+      }
+
+      .track-table td {
+        min-height: 3.25rem;
+        padding: .9rem 1rem;
+        vertical-align: middle;
+        cursor: pointer;
+      }
+
+      .track-title {
+        overflow-wrap: anywhere;
+      }
+
+      #contextMenu {
+        position: absolute;
+        z-index: 1040;
+      }
+
+      @media (min-width: 768px) {
+        .page {
+          padding: 1.5rem;
+        }
+
+        .toolbar {
+          grid-template-columns: 1fr auto;
+          align-items: end;
+        }
+
+        .actions {
+          grid-template-columns: auto auto;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <audio class="pinned" id="player" controls preload="none">
+      <source src="">
+      Your browser does not support the audio element.
+    </audio>
+
+    <main class="container-fluid page">
+      <section class="toolbar">
+        <div>
+          <h1 class="h3 mb-2">NOVK</h1>
+          <span class="badge text-bg-warning">{{ current_playlist }}</span>
+        </div>
+
+        <div class="actions">
+          <a class="btn btn-outline-success" href="/music/upload">Загрузить</a>
+          <div class="dropdown">
+            <button class="btn btn-outline-success dropdown-toggle w-100" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+              Плэйлист
+            </button>
+            <div class="dropdown-menu" id="playlists">
+              {% for playlist in playlists %}
+                <a class="dropdown-item" href="/music?playlist={{ playlist.id }}">{{ playlist.name }}</a>
+              {% endfor %}
+              <a class="dropdown-item" href="/music/create-playlist">Создать</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <table class="table table-striped table-hover track-table" id="SongTable">
+        <tbody>
+          {% for song in songs %}
+            <tr class="table-default">
+              <td class="Song" onclick="clickWrapper(this)" data-path="{{ song.file }}" id="{{ song.id }}">
+                <span class="track-title">{{ song.artist }} - {{ song.title }}</span>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <div id="contextMenu" class="dropdown-menu" role="menu">
+        <a class="dropdown-item" tabindex="-1" href="#">Добавить в плэйлист</a>
+      </div>
+
+      <div class="modal fade" id="add_into_playlist" tabindex="-1" role="dialog" aria-hidden="true" data-invoked_song_id="0">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+          <div class="modal-content">
+            <div class="modal-body">
+              <div class="d-grid gap-2">
+                {% for playlist in playlists %}
+                  <button class="btn btn-primary" type="button" data-bs-dismiss="modal" data-playlist-id="{{ playlist.id }}" onclick="ajax_add_to_playlist(this)">
+                    {{ playlist.name }}
+                  </button>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script src="/static/js/common.js"></script>
+    <script src="/static/audio/js/player.js"></script>
+    <script src="/static/audio/js/ajax.js"></script>
+  </body>
+</html>
