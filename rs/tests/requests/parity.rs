@@ -1365,3 +1365,116 @@ async fn ts27_unreadable_tags_preserve_original_bytes() {
     })
     .await;
 }
+
+/// Correctly encoded song names must retain Unicode, special characters, and internal spaces throughout the upload.
+///
+/// Case: TS-28 saves three ID3v2.3 uploads, a UTF-16 Cyrillic title with HTML characters and two spaces, Latin-1 Mötley Crüe, and UTF-16 Sigur Rós.
+///
+/// Expected: Exact form, database, and file values, escaped HTML, and exactly three songs in newest-first order.
+#[tokio::test]
+#[serial]
+async fn ts28_unicode_names_and_html_escaping() {
+    let _media = Media::new();
+    request_with_create_db::<App, _, _>(|request, ctx| async move {
+        let anna = user(&ctx, "anna@test.local").await;
+        let cases = [
+            (
+                id3::Encoding::UTF16,
+                r#"Песня №1 — «Тест» & <b>x</b> 'одинарные' "двойные"  два пробела 🎵"#,
+                "Би-2 & Сплин",
+                "Альбом: Ёлка 2024",
+            ),
+            (
+                id3::Encoding::Latin1,
+                "Kickstart My Heart",
+                "Mötley Crüe",
+                "Dr. Feelgood",
+            ),
+            (
+                id3::Encoding::UTF16,
+                "Hoppípolla",
+                "Sigur Rós",
+                "Takk…",
+            ),
+        ];
+        let mut saved_ids = Vec::new();
+        for (encoding, title, artist, album) in cases {
+            let mut tag = Tag::new();
+            for (id, value) in [("TIT2", title), ("TPE1", artist), ("TALB", album)] {
+                tag.add_frame(id3::Frame::text(id, value).set_encoding(Some(encoding)));
+            }
+            let mut bytes = Vec::new();
+            tag.write_to(&mut bytes, Version::Id3v23).unwrap();
+            bytes.extend_from_slice(&mp3(false, false));
+            let fixture = Tag::read_from2(std::io::Cursor::new(&bytes)).unwrap();
+            for id in ["TIT2", "TPE1", "TALB"] {
+                assert_eq!(fixture.get(id).unwrap().encoding(), Some(encoding));
+            }
+
+            let response = request.post("/music/upload")
+                .add_header(COOKIE, cookie(&ctx, &anna))
+                .bytes(multipart(&bytes, 0))
+                .content_type("multipart/form-data; boundary=novk-boundary").await;
+            response.assert_status(StatusCode::SEE_OTHER);
+            assert_eq!(response.header(LOCATION), "/music/upload/confirm");
+            let response = request.get("/music/upload/confirm")
+                .add_header(COOKIE, cookie(&ctx, &anna)).await;
+            response.assert_status(StatusCode::OK);
+            let html = response.text();
+            assert_attribute_eq(&html, "input[name=title]", "value", title);
+            assert_attribute_eq(&html, "input[name=artist]", "value", artist);
+            assert_attribute_eq(&html, "input[name=album]", "value", album);
+            let uuid = uuid_from_html(&html);
+            let response = request.post("/music/upload/confirm")
+                .add_header(COOKIE, cookie(&ctx, &anna))
+                .form(&json!({"uuid": uuid.to_string(), "title": title, "artist": artist, "album": album, "comment": "", "year": "", "track": "", "genre": ""})).await;
+            response.assert_status(StatusCode::SEE_OTHER);
+            assert_eq!(response.header(LOCATION), "/music");
+
+            let saved = songs::Entity::find().order_by_desc(songs::Column::Id)
+                .one(&ctx.db).await.unwrap().unwrap();
+            assert_eq!(saved.title.as_bytes(), title.as_bytes());
+            assert_eq!(saved.artist.as_bytes(), artist.as_bytes());
+            assert_eq!(saved.album.as_deref().unwrap().as_bytes(), album.as_bytes());
+            assert_eq!(saved.file_path, format!("audio/{uuid}.mp3"));
+            saved_ids.push(saved.id);
+            let root = Settings::from_config(&ctx.config).unwrap().uploaded_dir;
+            let saved_tag = Tag::read_from_path(root.join(&saved.file_path)).unwrap();
+            assert_eq!(saved_tag.version(), Version::Id3v23);
+            assert_eq!(saved_tag.title(), Some(title));
+            assert_eq!(saved_tag.album(), Some(album));
+            assert_eq!(saved_tag.artists().map(|values| values.join("/")).as_deref(), Some(artist));
+            for id in ["TIT2", "TPE1", "TALB"] {
+                assert_eq!(saved_tag.get(id).unwrap().encoding(), Some(id3::Encoding::UTF16));
+            }
+            let response = request.get("/music").add_header(COOKIE, cookie(&ctx, &anna)).await;
+            response.assert_status(StatusCode::OK);
+            if encoding == id3::Encoding::UTF16 && artist == "Би-2 & Сплин" {
+                let html = response.text();
+                assert!(html.contains("&lt;b&gt;x&lt;&#x2F;b&gt;"));
+                assert!(!html.contains("<b>x</b>"));
+            }
+        }
+        assert_eq!(songs::Entity::find().count(&ctx.db).await.unwrap(), 3);
+        let playlists = playlists::Entity::find().all(&ctx.db).await.unwrap();
+        assert_eq!(playlists.len(), 1);
+        assert_eq!(playlists[0].user_id, anna.id);
+        assert_eq!(playlists[0].name, "Медиатека");
+        assert!(playlists[0].is_default);
+        let links = playlist_songs::Entity::find().all(&ctx.db).await.unwrap();
+        assert_eq!(links.len(), 3);
+        for id in saved_ids {
+            assert!(links.iter().any(|link| link.playlist_id == playlists[0].id && link.song_id == id));
+        }
+        let response = request.get("/music").add_header(COOKIE, cookie(&ctx, &anna)).await;
+        response.assert_status(StatusCode::OK);
+        let html = response.text();
+        assert_css_eq_list(&html, "#SongTable .track-title", &[
+            "Sigur Rós - Hoppípolla",
+            "Mötley Crüe - Kickstart My Heart",
+            r#"Би-2 & Сплин - Песня №1 — «Тест» & <b>x</b> 'одинарные' "двойные"  два пробела 🎵"#,
+        ]);
+        assert!(html.contains("&lt;b&gt;x&lt;&#x2F;b&gt;"));
+        assert!(!html.contains("<b>x</b>"));
+    }).await;
+}
