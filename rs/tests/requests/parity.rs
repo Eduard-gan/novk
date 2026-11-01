@@ -1162,3 +1162,190 @@ async fn ts25_upload_identifiers() {
     })
     .await;
 }
+
+#[derive(Clone, Copy)]
+enum TagDamage {
+    Header,
+    FrameSize,
+    Encryption,
+}
+
+fn unreadable_mp3(damage: TagDamage) -> Vec<u8> {
+    let mut tag = Tag::new();
+    tag.set_title("Back in Black");
+    tag.set_artist("AC/DC");
+    let mut bytes = Vec::new();
+    tag.write_to(&mut bytes, Version::Id3v23).unwrap();
+    assert_eq!(&bytes[10..14], b"TIT2");
+    let title_size = u32::from_be_bytes(bytes[14..18].try_into().unwrap()) as usize;
+    let artist_offset = 20 + title_size;
+    assert_eq!(&bytes[artist_offset..artist_offset + 4], b"TPE1");
+    let complete = Tag::read_from2(std::io::Cursor::new(&bytes)).unwrap();
+    assert_eq!(complete.title(), Some("Back in Black"));
+    assert_eq!(complete.artist(), Some("AC/DC"));
+    bytes.extend_from_slice(&mp3(false, false));
+    match damage {
+        TagDamage::Header => bytes[5] = 0x01,
+        TagDamage::FrameSize => {
+            // Exceed the whole input so decoding fails even if the parser reads into audio data.
+            let invalid_size = u32::try_from(bytes.len() + 1).unwrap().to_be_bytes();
+            bytes[artist_offset + 4..artist_offset + 8].copy_from_slice(&invalid_size);
+        }
+        TagDamage::Encryption => bytes[artist_offset + 9] |= 0x40,
+    }
+    let error = Tag::read_from2(std::io::Cursor::new(&bytes)).unwrap_err();
+    match damage {
+        TagDamage::Header => {
+            assert!(matches!(error.kind, id3::ErrorKind::Parsing));
+            assert!(error.partial_tag.is_none());
+        }
+        TagDamage::FrameSize | TagDamage::Encryption => {
+            if matches!(damage, TagDamage::Encryption) {
+                assert!(matches!(error.kind, id3::ErrorKind::UnsupportedFeature));
+            }
+            let partial = error.partial_tag.unwrap();
+            assert_eq!(partial.title(), Some("Back in Black"));
+            assert_eq!(partial.artist(), None);
+        }
+    }
+    bytes
+}
+
+/// Unreadable ID3 tags must allow confirmation with only fields decoded before the error.
+///
+/// Case: TS-26 uploads three MP3 copies with header flag 0x01, an oversized second frame, and an encrypted second frame.
+///
+/// Expected: Each upload redirects to a 200 form, header failure leaves seven fields empty, and frame failures preserve only the title.
+#[tokio::test]
+#[serial]
+async fn ts26_unreadable_tags_show_form() {
+    let _media = Media::new();
+    request_with_create_db::<App, _, _>(|request, ctx| async move {
+        let anna = user(&ctx, "anna@test.local").await;
+        for damage in [
+            TagDamage::Header,
+            TagDamage::FrameSize,
+            TagDamage::Encryption,
+        ] {
+            let bytes = unreadable_mp3(damage);
+            let response = request
+                .post("/music/upload")
+                .add_header(COOKIE, cookie(&ctx, &anna))
+                .bytes(multipart(&bytes, 0))
+                .content_type("multipart/form-data; boundary=novk-boundary")
+                .await;
+            response.assert_status(StatusCode::SEE_OTHER);
+            assert_eq!(response.header(LOCATION), "/music/upload/confirm");
+            for _ in 0..2 {
+                let response = request
+                    .get("/music/upload/confirm")
+                    .add_header(COOKIE, cookie(&ctx, &anna))
+                    .await;
+                response.assert_status(StatusCode::OK);
+                let html = response.text();
+                let title = if matches!(damage, TagDamage::Header) {
+                    ""
+                } else {
+                    "Back in Black"
+                };
+                assert!(html.contains(&format!("name=\"title\" value=\"{title}\"")));
+                for field in ["artist", "album", "comment", "year", "track", "genre"] {
+                    assert!(html.contains(&format!("name=\"{field}\" value=\"\"")));
+                }
+                uuid_from_html(&html);
+            }
+        }
+        assert_eq!(songs::Entity::find().count(&ctx.db).await.unwrap(), 0);
+        let root = Settings::from_config(&ctx.config).unwrap().uploaded_dir;
+        assert_eq!(std::fs::read_dir(root.join("audio")).unwrap().count(), 0);
+    })
+    .await;
+}
+
+/// Saving unreadable ID3 tags must preserve all original bytes and store form values in the library.
+///
+/// Case: TS-27 saves header and frame failures with title Back in Black, artist AC/DC, year 1980, and genre Rock.
+///
+/// Expected: Two 303 successes, matching stored bytes, one rock genre, two default-playlist links, and the newest song first.
+#[tokio::test]
+#[serial]
+async fn ts27_unreadable_tags_preserve_original_bytes() {
+    let _media = Media::new();
+    request_with_create_db::<App, _, _>(|request, ctx| async move {
+        let anna = user(&ctx, "anna@test.local").await;
+        let mut saved_ids = Vec::new();
+        for damage in [TagDamage::Header, TagDamage::FrameSize] {
+            let bytes = unreadable_mp3(damage);
+            request
+                .post("/music/upload")
+                .add_header(COOKIE, cookie(&ctx, &anna))
+                .bytes(multipart(&bytes, 0))
+                .content_type("multipart/form-data; boundary=novk-boundary")
+                .await
+                .assert_status(StatusCode::SEE_OTHER);
+            let response = request
+                .get("/music/upload/confirm")
+                .add_header(COOKIE, cookie(&ctx, &anna))
+                .await;
+            response.assert_status(StatusCode::OK);
+            let uuid = uuid_from_html(&response.text());
+            let mut input = fields(uuid);
+            input["genre"] = json!("Rock");
+            let response = request
+                .post("/music/upload/confirm")
+                .add_header(COOKIE, cookie(&ctx, &anna))
+                .form(&input)
+                .await;
+            response.assert_status(StatusCode::SEE_OTHER);
+            assert_eq!(response.header(LOCATION), "/music");
+            let saved = songs::Entity::find()
+                .order_by_desc(songs::Column::Id)
+                .one(&ctx.db)
+                .await
+                .unwrap()
+                .unwrap();
+            assert_eq!(saved.title, "Back in Black");
+            assert_eq!(saved.artist, "AC/DC");
+            assert_eq!(saved.year, Some(1980));
+            assert_eq!(saved.file_path, format!("audio/{uuid}.mp3"));
+            let root = Settings::from_config(&ctx.config).unwrap().uploaded_dir;
+            assert_eq!(std::fs::read(root.join(&saved.file_path)).unwrap(), bytes);
+            let genre = genres::Entity::find_by_id(saved.genre_id.unwrap())
+                .one(&ctx.db)
+                .await
+                .unwrap()
+                .unwrap();
+            assert_eq!(genre.name, "rock");
+            saved_ids.push(saved.id);
+            request
+                .get("/music/upload/confirm")
+                .add_header(COOKIE, cookie(&ctx, &anna))
+                .await
+                .assert_status(StatusCode::CONFLICT);
+        }
+        assert_eq!(songs::Entity::find().count(&ctx.db).await.unwrap(), 2);
+        assert_eq!(genres::Entity::find().count(&ctx.db).await.unwrap(), 1);
+        let all_playlists = playlists::Entity::find().all(&ctx.db).await.unwrap();
+        assert_eq!(all_playlists.len(), 1);
+        assert_eq!(all_playlists[0].name, "Медиатека");
+        assert!(all_playlists[0].is_default);
+        let links = playlist_songs::Entity::find().all(&ctx.db).await.unwrap();
+        assert_eq!(links.len(), 2);
+        for id in &saved_ids {
+            assert!(links
+                .iter()
+                .any(|link| link.song_id == *id && link.playlist_id == all_playlists[0].id));
+        }
+        let response = request
+            .get("/music")
+            .add_header(COOKIE, cookie(&ctx, &anna))
+            .await;
+        response.assert_status(StatusCode::OK);
+        let html = response.text();
+        assert_eq!(html.matches("AC/DC - Back in Black").count(), 2);
+        let old = format!("id=\"{}\"", saved_ids[0]);
+        let new = format!("id=\"{}\"", saved_ids[1]);
+        assert!(html.find(&new).unwrap() < html.find(&old).unwrap());
+    })
+    .await;
+}

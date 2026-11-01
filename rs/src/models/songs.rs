@@ -121,8 +121,7 @@ impl SongInput {
         })
     }
 
-    pub fn from_mp3(bytes: &[u8]) -> LibraryResult<Self> {
-        let tag = read_tag(bytes)?;
+    pub fn from_tag(tag: &Tag) -> Self {
         let year = tag.year().or_else(|| {
             tag.get("TDRC")
                 .and_then(|frame| frame.content().text())
@@ -134,7 +133,7 @@ impl SongInput {
             .and_then(|frame| frame.content().text())
             .and_then(|text| text.split('/').next())
             .and_then(|text| text.parse::<i32>().ok());
-        Ok(Self {
+        Self {
             title: tag.title().unwrap_or_default().to_string(),
             artist: tag.artist().unwrap_or_default().to_string(),
             album: tag.album().unwrap_or_default().to_string(),
@@ -145,27 +144,24 @@ impl SongInput {
                 .genre_parsed()
                 .map(|value| value.into_owned())
                 .unwrap_or_default(),
-        })
+        }
     }
 }
 
-fn read_tag(bytes: &[u8]) -> LibraryResult<Tag> {
+pub(crate) fn read_tag(bytes: &[u8]) -> (Tag, Option<&'static str>) {
     match Tag::read_from2(Cursor::new(bytes)) {
-        Ok(tag) => Ok(tag),
-        Err(e) if matches!(e.kind, id3::ErrorKind::NoTag) => Ok(Tag::new()),
+        Ok(tag) => (tag, None),
+        Err(e) if matches!(e.kind, id3::ErrorKind::NoTag) => (Tag::new(), None),
         Err(e) => {
             let kind = match e.kind {
-                id3::ErrorKind::Io(_) => "io",
-                id3::ErrorKind::StringDecoding(_) => "string-decoding",
-                id3::ErrorKind::Parsing => "parsing",
-                id3::ErrorKind::InvalidInput => "invalid-input",
-                id3::ErrorKind::UnsupportedFeature => "unsupported-feature",
-                id3::ErrorKind::NoTag => "no-tag",
+                id3::ErrorKind::Io(_) => "Io",
+                id3::ErrorKind::StringDecoding(_) => "StringDecoding",
+                id3::ErrorKind::Parsing => "Parsing",
+                id3::ErrorKind::InvalidInput => "InvalidInput",
+                id3::ErrorKind::UnsupportedFeature => "UnsupportedFeature",
+                id3::ErrorKind::NoTag => "NoTag",
             };
-            tracing::error!(kind, "could not read MP3 tags");
-            Err(LibraryError::Internal(loco_rs::Error::string(
-                "MP3 tag decoding failed",
-            )))
+            (e.partial_tag.unwrap_or_default(), Some(kind))
         }
     }
 }
@@ -184,7 +180,7 @@ impl Model {
         upload: PendingUpload,
         fields: SongFields,
     ) -> LibraryResult<Self> {
-        let mut tag = read_tag(&upload.bytes)?;
+        let mut tag = upload.tag;
         for id in ["TPE1", "TIT2", "TALB", "TYER", "TDRC", "TRCK", "TCON"] {
             tag.remove(id);
         }
@@ -216,10 +212,15 @@ impl Model {
             let written = (|| -> LibraryResult<()> {
                 file.write_all(&upload.bytes)
                     .map_err(|e| LibraryError::Internal(e.into()))?;
-                tag.write_to_file(&mut file, Version::Id3v23)
-                    .map_err(|_e| {
-                        LibraryError::Internal(loco_rs::Error::string("MP3 tag encoding failed"))
-                    })?;
+                // Unreadable tags retain every original byte, including frames after the error.
+                if upload.tag_error.is_none() {
+                    tag.write_to_file(&mut file, Version::Id3v23)
+                        .map_err(|_e| {
+                            LibraryError::Internal(loco_rs::Error::string(
+                                "MP3 tag encoding failed",
+                            ))
+                        })?;
+                }
                 Ok(())
             })();
             drop(file);

@@ -12,6 +12,8 @@ pub struct PendingUpload {
     pub bytes: Arc<Vec<u8>>,
     pub original_filename: String,
     pub created_at: Instant,
+    pub tag: id3::Tag,
+    pub tag_error: Option<&'static str>,
 }
 
 #[derive(Default)]
@@ -21,6 +23,7 @@ pub struct PendingUploads {
 
 impl PendingUploads {
     pub fn insert(&self, user_id: i32, bytes: Vec<u8>, original_filename: String) -> Uuid {
+        let (tag, tag_error) = crate::models::songs::read_tag(&bytes);
         let mut slots = self.slots.lock().expect("pending upload mutex poisoned");
         slots.retain(|_, upload| upload.created_at.elapsed() < Duration::from_secs(1800));
         let uuid = Uuid::new_v4();
@@ -31,8 +34,16 @@ impl PendingUploads {
                 bytes: Arc::new(bytes),
                 original_filename,
                 created_at: Instant::now(),
+                tag,
+                tag_error,
             },
         );
+        if let Some(kind) = tag_error {
+            tracing::warn!(
+                error_kind = kind,
+                "upload has unreadable ID3 tags, original bytes will be preserved"
+            );
+        }
         uuid
     }
 

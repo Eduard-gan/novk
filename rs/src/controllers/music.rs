@@ -184,7 +184,6 @@ async fn upload(
             if infer::get(&bytes).is_none_or(|kind| kind.mime_type() != "audio/mpeg") {
                 return Err(LibraryError::UploadNotMp3);
             }
-            songs::SongInput::from_mp3(&bytes)?;
             uploaded = Some((bytes, filename));
         } else {
             while field.chunk().await?.is_some() {}
@@ -208,7 +207,7 @@ async fn confirm(
         .get_ref::<PendingUploads>()
         .expect("pending upload store missing");
     let pending = store.get(current_user.id, None)?;
-    let song = songs::SongInput::from_mp3(&pending.bytes)?;
+    let song = songs::SongInput::from_tag(&pending.tag);
     Ok(format::view(
         &view_engine,
         "music/confirm.html",
