@@ -6,6 +6,9 @@ from pathlib import Path
 import subprocess
 import sys
 
+DEPLOY_DIR = Path(__file__).resolve().parent
+REPO_ROOT = DEPLOY_DIR.parent
+
 
 def run_command(command: list[str]) -> None:
     """Execute a local shell command and raise on failure."""
@@ -24,10 +27,10 @@ def run_remote_ssh(target: str, remote_command: str) -> subprocess.CompletedProc
 
 
 def deploy_database(target: str, remote_db_path: str) -> None:
-    """Check for local database, backup remote if present, and copy."""
-    local_db = Path("novk.sqlite")
+    """Check for database in deploy directory, backup remote if present, and copy."""
+    local_db = DEPLOY_DIR / "novk.sqlite"
     if not local_db.is_file():
-        print("[INFO] Database file novk.sqlite not found in ., skipping.")
+        print(f"[INFO] Database file {local_db.name} not found in deploy/, skipping.")
         return
 
     print(f"[INFO] Found local database: {local_db}. Preparing remote backup...")
@@ -39,26 +42,24 @@ def deploy_database(target: str, remote_db_path: str) -> None:
     run_remote_ssh(target=target, remote_command=backup_cmd)
 
     print(f"[INFO] Copying {local_db} to {target}:{remote_db_path}...")
-    run_command(command=["rsync", "-avz", str(local_db), f"{target}:{remote_db_path}"])
+    run_command(command=["scp", str(local_db), f"{target}:{remote_db_path}"])
 
 
 def deploy_audio(target: str, remote_audio_dir: str) -> None:
-    """Check for local audio directory and sync without deleting existing files."""
-    local_audio = Path("audio")
+    """Check for audio directory in deploy/ and copy files without deleting remote ones."""
+    local_audio = DEPLOY_DIR / "audio"
     if not local_audio.is_dir():
-        print("[INFO] Audio directory ./audio not found in ., skipping.")
+        print("[INFO] Audio directory deploy/audio not found, skipping.")
         return
 
-    print(f"[INFO] Found local audio directory: {local_audio}. Syncing files...")
-    run_command(
-        command=[
-            "rsync",
-            "-av",
-            f"{local_audio}/",
-            f"{target}:{remote_audio_dir}/",
-        ]
-    )
-    print("[INFO] Audio files synchronized successfully.")
+    audio_files = [str(p) for p in local_audio.iterdir() if p.is_file()]
+    if not audio_files:
+        print("[INFO] No files found in deploy/audio, skipping.")
+        return
+
+    print(f"[INFO] Found {len(audio_files)} audio file(s) in deploy/audio. Copying via scp...")
+    run_command(command=["scp", *audio_files, f"{target}:{remote_audio_dir}/"])
+    print("[INFO] Audio files copied successfully.")
 
 
 def build_binary(skip_build: bool) -> None:
@@ -67,6 +68,7 @@ def build_binary(skip_build: bool) -> None:
         print("[INFO] Skipping local cargo build as requested.")
         return
 
+    cargo_manifest = REPO_ROOT / "rs" / "Cargo.toml"
     print("[INFO] Building Rust binary in release mode...")
     run_command(
         command=[
@@ -74,16 +76,20 @@ def build_binary(skip_build: bool) -> None:
             "build",
             "--release",
             "--manifest-path",
-            "rs/Cargo.toml",
+            str(cargo_manifest),
         ]
     )
 
 
 def deploy_app_and_service(target: str, remote_app_dir: str) -> None:
     """Copy binary, configs, assets, and service file to server."""
-    bin_path = Path("rs/target/release/novk-cli")
+    bin_path = REPO_ROOT / "rs" / "target" / "release" / "novk-cli"
     if not bin_path.is_file():
         raise RuntimeError(f"Binary not found at {bin_path}. Run build first.")
+
+    config_dir = REPO_ROOT / "rs" / "config"
+    assets_dir = REPO_ROOT / "rs" / "assets"
+    service_file = DEPLOY_DIR / "novk.service"
 
     print(f"[INFO] Ensuring directories on {target}...")
     run_remote_ssh(
@@ -91,41 +97,21 @@ def deploy_app_and_service(target: str, remote_app_dir: str) -> None:
         remote_command=f"mkdir -p {remote_app_dir}/config {remote_app_dir}/assets",
     )
 
-    print(f"[INFO] Copying binary and assets to {target}:{remote_app_dir}...")
-    run_command(
-        command=[
-            "rsync",
-            "-avz",
-            str(bin_path),
-            f"{target}:{remote_app_dir}/novk-cli",
-        ]
-    )
-    run_command(
-        command=[
-            "rsync",
-            "-avz",
-            "rs/config/",
-            f"{target}:{remote_app_dir}/config/",
-        ]
-    )
-    run_command(
-        command=[
-            "rsync",
-            "-avz",
-            "rs/assets/",
-            f"{target}:{remote_app_dir}/assets/",
-        ]
-    )
+    print(f"[INFO] Copying binary to {target}:{remote_app_dir}/novk-cli...")
+    run_command(command=["scp", str(bin_path), f"{target}:{remote_app_dir}/novk-cli"])
+
+    print(f"[INFO] Copying config files to {target}:{remote_app_dir}/config/...")
+    config_items = [str(p) for p in config_dir.iterdir()]
+    if config_items:
+        run_command(command=["scp", "-r", *config_items, f"{target}:{remote_app_dir}/config/"])
+
+    print(f"[INFO] Copying assets to {target}:{remote_app_dir}/assets/...")
+    assets_items = [str(p) for p in assets_dir.iterdir()]
+    if assets_items:
+        run_command(command=["scp", "-r", *assets_items, f"{target}:{remote_app_dir}/assets/"])
 
     print(f"[INFO] Copying novk.service to {target}:/etc/systemd/system/...")
-    run_command(
-        command=[
-            "rsync",
-            "-avz",
-            "novk.service",
-            f"{target}:/etc/systemd/system/novk.service",
-        ]
-    )
+    run_command(command=["scp", str(service_file), f"{target}:/etc/systemd/system/novk.service"])
 
 
 def manage_remote_service(target: str) -> None:

@@ -2,3 +2,5 @@
 global_env
 __pycache__/
 *.pyc
+deploy/audio/
+deploy/*.sqlite*
