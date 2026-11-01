@@ -1172,6 +1172,66 @@ async fn ts25_upload_identifiers() {
     .await;
 }
 
+/// Reads the text-encoding byte of one ID3v2.3 frame in a test-controlled tag.
+///
+/// Supports only ID3v2.3 without unsynchronisation, extended header, or frame flags and asserts every bound.
+fn v23_text_encoding(bytes: &[u8], frame_id: &str) -> u8 {
+    assert!(bytes.len() >= 10, "input shorter than an ID3v2 header");
+    assert_eq!(&bytes[0..3], b"ID3", "missing ID3v2 signature");
+    assert_eq!(
+        (bytes[3], bytes[4]),
+        (3, 0),
+        "helper supports ID3v2.3.0 only"
+    );
+    assert_eq!(bytes[5], 0, "helper rejects ID3 header flags");
+    assert!(
+        bytes[6..10].iter().all(|byte| byte & 0x80 == 0),
+        "tag size is not syncsafe"
+    );
+    let size = bytes[6..10]
+        .iter()
+        .fold(0usize, |size, byte| (size << 7) | usize::from(*byte));
+    let tag_end = 10usize.checked_add(size).expect("tag size overflow");
+    assert!(tag_end <= bytes.len(), "tag exceeds input");
+    let mut offset = 10;
+    let mut found = Vec::new();
+    while offset < tag_end {
+        if bytes[offset] == 0 {
+            assert!(
+                bytes[offset..tag_end].iter().all(|byte| *byte == 0),
+                "non-zero bytes after padding start"
+            );
+            break;
+        }
+        assert!(offset + 10 <= tag_end, "frame header exceeds tag");
+        let id = &bytes[offset..offset + 4];
+        assert!(
+            id.iter()
+                .all(|byte| byte.is_ascii_uppercase() || byte.is_ascii_digit()),
+            "invalid frame id"
+        );
+        let frame_size =
+            u32::from_be_bytes(bytes[offset + 4..offset + 8].try_into().unwrap()) as usize;
+        assert!(frame_size > 0, "empty frame");
+        let frame_end = (offset + 10)
+            .checked_add(frame_size)
+            .expect("frame size overflow");
+        assert!(frame_end <= tag_end, "frame exceeds tag");
+        assert_eq!(
+            &bytes[offset + 8..offset + 10],
+            &[0, 0],
+            "helper rejects frame flags"
+        );
+        if id == frame_id.as_bytes() {
+            found.push(bytes[offset + 10]);
+        }
+        offset = frame_end;
+    }
+    assert_eq!(found.len(), 1, "frame {frame_id} must occur exactly once");
+    assert!(found[0] <= 1, "ID3v2.3 text encoding must be 0 or 1");
+    found[0]
+}
+
 #[derive(Clone, Copy)]
 enum TagDamage {
     Header,
@@ -1406,9 +1466,10 @@ async fn ts28_unicode_names_and_html_escaping() {
             let mut bytes = Vec::new();
             tag.write_to(&mut bytes, Version::Id3v23).unwrap();
             bytes.extend_from_slice(&mp3(false, false));
-            let fixture = Tag::read_from2(std::io::Cursor::new(&bytes)).unwrap();
+            Tag::read_from2(std::io::Cursor::new(&bytes)).unwrap();
+            let expected = if encoding == id3::Encoding::Latin1 { 0 } else { 1 };
             for id in ["TIT2", "TPE1", "TALB"] {
-                assert_eq!(fixture.get(id).unwrap().encoding(), Some(encoding));
+                assert_eq!(v23_text_encoding(&bytes, id), expected);
             }
 
             let response = request.post("/music/upload")
@@ -1444,8 +1505,9 @@ async fn ts28_unicode_names_and_html_escaping() {
             assert_eq!(saved_tag.title(), Some(title));
             assert_eq!(saved_tag.album(), Some(album));
             assert_eq!(saved_tag.artists().map(|values| values.join("/")).as_deref(), Some(artist));
+            let saved_bytes = std::fs::read(root.join(&saved.file_path)).unwrap();
             for id in ["TIT2", "TPE1", "TALB"] {
-                assert_eq!(saved_tag.get(id).unwrap().encoding(), Some(id3::Encoding::UTF16));
+                assert_eq!(v23_text_encoding(&saved_bytes, id), 1);
             }
             let response = request.get("/music").add_header(COOKIE, cookie(&ctx, &anna)).await;
             response.assert_status(StatusCode::OK);
