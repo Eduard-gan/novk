@@ -100,7 +100,12 @@ def deploy_app_and_service(target: str, remote_app_dir: str) -> None:
     )
 
     print(f"[INFO] Copying binary to {target}:{remote_app_dir}/novk-cli...")
-    run_command(command=["scp", str(bin_path), f"{target}:{remote_app_dir}/novk-cli"])
+    tmp_bin = f"{remote_app_dir}/novk-cli.new"
+    run_command(command=["scp", str(bin_path), f"{target}:{tmp_bin}"])
+    run_remote_ssh(
+        target=target,
+        remote_command=f"mv -f {tmp_bin} {remote_app_dir}/novk-cli && chmod 755 {remote_app_dir}/novk-cli",
+    )
 
     print(f"[INFO] Copying config files to {target}:{remote_app_dir}/config/...")
     config_items = [str(p) for p in config_dir.iterdir()]
