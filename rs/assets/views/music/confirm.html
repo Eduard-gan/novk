@@ -1,0 +1,17 @@
+{% extends "music/form.html" %}
+{% block title %}Сохранить песню{% endblock title %}
+{% block content %}
+<h1 class="h3 my-4">Сохранить песню</h1>
+<form method="post" action="/music/upload/confirm" data-fetch-form>
+  <input type="hidden" name="uuid" value="{{ uuid }}">
+  {% for field in ["title", "artist", "album", "comment", "year", "track", "genre"] %}
+    <div class="mb-3">
+      <label for="{{ field }}" class="form-label">{% if field == "title" %}Название{% elif field == "artist" %}Исполнитель{% elif field == "album" %}Альбом{% elif field == "comment" %}Комментарий{% elif field == "year" %}Год{% elif field == "track" %}Номер трека{% else %}Жанр{% endif %}</label>
+      <input id="{{ field }}" name="{{ field }}" value="{{ song[field] }}" class="form-control" {% if field == "year" or field == "track" %}inputmode="numeric"{% endif %}>
+      <div class="text-danger" data-field-error="{{ field }}" role="alert"></div>
+    </div>
+  {% endfor %}
+  <p class="text-danger" data-form-error role="alert"></p>
+  <button type="submit" class="btn btn-success">Сохранить</button>
+</form>
+{% endblock content %}

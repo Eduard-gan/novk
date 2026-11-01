@@ -22,6 +22,17 @@ DOMAIN=novk.localplayer.dev
 
 ## Ручное добавление музыки
 
+Для обычной работы используйте «Загрузить» на странице `/music`. Выберите MP3
+не больше 20 МиБ, затем проверьте поля и нажмите «Сохранить». Файл хранится
+в памяти не больше 30 минут до подтверждения. Новая загрузка заменяет старую,
+перезапуск её удаляет. Форма требует JavaScript. При отказе она показывает
+причину, введённые поля сохраняются. Жанр приводится к нижнему регистру.
+
+Создать плейлист можно через меню. Имя обрезается по краям, не больше
+32 символов, уникально у пользователя. Через контекстное меню песни её можно
+добавить в свой плейлист. Повторное добавление отклоняется. Новые песни сверху.
+«Медиатека» создаётся при первом обращении. «Выход» удаляет cookie.
+
 Файлы хранятся вне БД в uploaded-root. В `songs.file_path` сохраняется путь
 относительно uploaded-root, например `audio/demo.mp3`. На фронт он отдается как
 `/uploaded/audio/demo.mp3`.
@@ -37,9 +48,25 @@ where email = 'root@gmail.com';
 insert into songs (title, artist, file_path, original_filename)
 values ('Demo Track', 'Demo Artist', 'audio/demo.mp3', 'demo.mp3');
 
-insert into playlist_songs (playlist_id, song_id, position)
-select playlists.id, songs.id, 1
+insert into playlist_songs (playlist_id, song_id)
+select playlists.id, songs.id
 from playlists, songs
 where playlists.name = 'Медиатека'
   and songs.file_path = 'audio/demo.mp3';
 ```
+
+При ручной вставке не создавайте вторую «Медиатеку» одному пользователю.
+В схеме нет колонок `playlist_songs.position`, `songs.file_size_bytes` и колонок
+токенов восстановления и регистрации `users`. Нужные текущим пользователям строки
+сохраняются миграциями. Не проверяйте миграции на пользовательской БД без копии.
+
+## Настройки медиа и входа
+
+В production задайте `NOVK_UPLOADED_DIR=/mnt/novk-data/data/novk/static/uploaded`.
+Корень должен существовать, приложение создаёт только `audio/`. Caddy отдаёт
+`/uploaded`. В development корень по умолчанию `assets/static/uploaded`, раздача
+идёт через приложение. В `settings.upload_file_limit` задано 20 971 520 байт.
+
+Имя cookie задано в `auth.jwt.location`. Срок JWT и cookie берётся из
+`auth.jwt.expiration`. После замены старой подписанной cookie на JWT нужно
+войти заново. Пароль не выводится в событиях входа и ошибках формы.

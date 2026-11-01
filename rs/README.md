@@ -4,28 +4,27 @@ NOVK — небольшой server-rendered музыкальный сервис 
 переписывание старого Django-приложения без сохранения старой схемы один в
 один.
 
-Цель текущей версии: авторизоваться, открыть `/music`, прочитать дефолтный
-плейлист пользователя из SQLite и проигрывать уже существующие MP3-файлы.
+Приложение поддерживает вход, плейлисты, загрузку MP3 с редактированием тегов
+и воспроизведение музыки из SQLite и файлового хранилища.
 
 ## Текущее состояние
 
 Готово:
 
 - cookie-based login через `GET /login` и `POST /login`;
-- signed HttpOnly auth-cookie;
+- JWT Loco в HttpOnly cookie, срок по конфигурации, выход;
 - защита SSR-страниц через `CurrentUser`;
-- SQLite schema для `users`, `songs`, `playlists`, `playlist_songs`;
-- чтение дефолтного плейлиста пользователя на `/music`;
+- SQLite schema для `users`, `songs`, `genres`, `playlists`, `playlist_songs`;
+- автоматическая «Медиатека», выбор плейлиста, новые песни сверху;
+- создание плейлистов и добавление существующих песен через UI;
+- загрузка MP3 до 20 МиБ в два шага, редактирование ID3v2.3 с сохранением обложки;
 - импорт старого дампа в текущую локальную `novk.sqlite`;
 - Dockerfile и `docker-compose.yml` для запуска приложения без Caddy.
 
-Пока не сделано:
+Вне объёма:
 
-- загрузка MP3 через UI;
-- ID3 чтение/редактирование;
-- создание плейлистов через UI;
-- добавление/удаление песен через UI;
-- logout endpoint;
+- регистрация, API аутентификации стартера, админка;
+- удаление песен из плейлистов;
 - импорт дампа как повторяемый task.
 
 ## Данные
@@ -45,7 +44,7 @@ songs
 - track nullable
 - file_path unique
 - original_filename nullable
-- file_size_bytes nullable
+- genre_id -> genres.id nullable, ON DELETE RESTRICT
 - uploaded_at
 - created_at
 - updated_at
@@ -58,14 +57,18 @@ playlists
 - created_at
 - updated_at
 - unique(user_id, name)
+- unique(user_id) WHERE is_default = 1
 
 playlist_songs
 - id
 - playlist_id -> playlists.id
 - song_id -> songs.id
-- position nullable
 - added_at
 - unique(playlist_id, song_id)
+
+genres
+- id
+- name unique
 ```
 
 Старый Django `audio_playlist.number` в новую схему не переносится.
@@ -92,9 +95,21 @@ audio/0001_Buffalo Tom - Summer.mp3
 /uploaded/audio/0001_Buffalo Tom - Summer.mp3
 ```
 
-Caddy управляется отдельно и должен отдавать `/uploaded/...` из каталога с
-музыкой. В compose этот каталог монтируется в контейнер как `/uploaded`, но само
-приложение сейчас не раздает его напрямую.
+Caddy управляется отдельно и в production отдаёт `/uploaded/...` из каталога
+`/mnt/novk-data/data/novk/static/uploaded`. Compose монтирует `/mnt/novk-data`
+по тому же пути. В development приложение отдаёт `/uploaded` само.
+
+Корень медиа задаётся `settings.uploaded_dir` из `NOVK_UPLOADED_DIR`. В development
+значение по умолчанию `assets/static/uploaded`. В production переменная обязательна.
+Корень должен существовать и быть каталогом. Приложение создаёт только `audio/`.
+Лимит файла `settings.upload_file_limit` равен 20 971 520 байт. Лимит multipart
+равен лимиту файла плюс 1 048 576 байт и действует только на POST загрузки.
+
+Незавершённая загрузка хранится в памяти, одна на пользователя, 30 минут.
+Новая успешная загрузка заменяет прежнюю. Перезапуск очищает все слоты.
+На диск файл попадает при подтверждении, как `audio/<uuid>.mp3`. Жанры
+нормализуются по Unicode в нижний регистр с одним пробелом между словами.
+Песня, жанр и связь с «Медиатекой» сохраняются в одной транзакции.
 
 ## Локальный запуск
 
@@ -163,7 +178,7 @@ Compose ожидает `.env`.
 JWT_SECRET=openssl rand -hex 64
 DOMAIN=novk.example.com
 NOVK_DATA_DIR=./data
-NOVK_UPLOADED_DIR=./uploaded
+NOVK_UPLOADED_DIR=/mnt/novk-data/data/novk/static/uploaded
 ```
 
 Важно: значение `JWT_SECRET` должно быть реальным секретом. Строка в
@@ -251,14 +266,39 @@ playlist_songs: 685
 GET  /
 GET  /login
 POST /login
+GET  /logout
 GET  /music
-GET  /music/upload              stub
-GET  /music/create-playlist     stub
-POST /music/ajax/playlist_operations  stub
+GET  /music/upload
+POST /music/upload
+GET  /music/upload/confirm
+POST /music/upload/confirm
+GET  /music/create-playlist
+POST /music/create-playlist
+POST /music/ajax/playlist-operations
 ```
 
-API-auth из Loco starter пока остается в коде, но основной пользовательский flow
-для NOVK — HTML-форма логина и signed cookie.
+`GET /` перенаправляет на `/music`. Защищённые страницы без действующей cookie
+перенаправляют на `/login`. Вход по email выдаёт JWT Loco, проверяется подпись
+и срок действия. Имя cookie хранится только в `auth.jwt.location`, тип `Cookie`.
+Атрибуты cookie `HttpOnly`, `SameSite=Lax`, `Path=/`, `Secure` при HTTPS.
+Выход удаляет cookie, но не отзывает JWT на сервере.
+
+Отказы обработчиков имеют код 409 и `application/problem+json` с `type`, `title`,
+`status`, `detail`, а при ошибке поля также `field`. Формы требуют JavaScript
+и отправляются через fetch. После успешного POST используется 303, шаг загрузки
+ведёт на `/music/upload/confirm`. AJAX возвращает текст при успехе и problem
+при отказе. Неизвестный маршрут даёт 404, внутренний сбой 500.
+В development и test fallback Loco выключен. CSRF-защита не используется.
+
+## Проверки
+
+CODER выполняет `cargo check --manifest-path rs/Cargo.toml` и
+`cargo clippy --manifest-path rs/Cargo.toml --all-targets` из корня репозитория.
+TS-01–25 находятся в `tests/requests/parity.rs` и unit-модулях `genres`, `uploads`.
+Для запуска тестов QA использует `cargo test --manifest-path rs/Cargo.toml`.
+HTTP-тесты создают изолированные SQLite и каталоги медиа. Не используйте
+пользовательскую БД для проверки миграций. Перед миграцией существующих данных
+нужна резервная копия.
 
 ## Production Notes
 

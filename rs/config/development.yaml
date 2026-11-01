@@ -24,6 +24,8 @@ server:
   host: http://{{ get_env(name="DOMAIN", default="localhost") }}
   # Out of the box middleware configuration. to disable middleware you can changed the `enable` field to `false` of comment the middleware block
   middlewares:
+    fallback:
+      enable: false
     cors:
       enable: true
       allow_origins:
@@ -53,24 +55,6 @@ workers:
   mode: BackgroundAsync
 
   
-
-# Mailer Configuration.
-mailer:
-  # SMTP mailer configuration.
-  smtp:
-    # Enable/Disable smtp mailer.
-    enable: true
-    # SMTP server host. e.x localhost, smtp.gmail.com
-    host: localhost
-    # SMTP server port
-    port: 1025
-    # Use secure connection (SSL/TLS).
-    secure: false
-    # auth:
-    #   user:
-    #   password:
-    # Override the SMTP hello name (default is the machine's hostname)
-    # hello_name:
 
 # Initializers Configuration
 # initializers:
@@ -109,6 +93,10 @@ auth:
     # Token expiration time in seconds
     expiration: 604800 # 7 days
 
+    location:
+      from: Cookie
+      name: auth
+
 settings:
-  auth:
-    cookie_name: auth
+  uploaded_dir: {{ get_env(name="NOVK_UPLOADED_DIR", default="assets/static/uploaded") | json_encode() }}
+  upload_file_limit: 20971520

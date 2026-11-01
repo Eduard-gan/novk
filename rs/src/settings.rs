@@ -1,36 +1,54 @@
-use loco_rs::config::Config;
+use loco_rs::{config::Config, Error, Result};
 use serde::Deserialize;
+use std::path::PathBuf;
 
-#[derive(Debug, Default, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct Settings {
-    #[serde(default)]
-    pub auth: Auth,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct Auth {
-    #[serde(default = "default_cookie_name")]
-    pub cookie_name: String,
-}
-
-impl Default for Auth {
-    fn default() -> Self {
-        Self {
-            cookie_name: default_cookie_name(),
-        }
-    }
-}
-
-fn default_cookie_name() -> String {
-    "auth".to_string()
+    pub uploaded_dir: PathBuf,
+    pub upload_file_limit: usize,
 }
 
 impl Settings {
-    pub fn from_config(config: &Config) -> Self {
-        let Some(settings) = &config.settings else {
-            return Self::default();
-        };
+    pub fn from_config(config: &Config) -> Result<Self> {
+        let value = config
+            .settings
+            .clone()
+            .ok_or_else(|| Error::string("media settings are missing"))?;
+        let settings: Self = serde_json::from_value(value)
+            .map_err(|e| Error::string(&format!("invalid media settings. {e}")))?;
+        if settings.upload_file_limit == 0
+            || settings.upload_file_limit.checked_add(1_048_576).is_none()
+        {
+            return Err(Error::string(
+                "upload file limit must be positive and leave room for multipart overhead",
+            ));
+        }
+        Ok(settings)
+    }
 
-        serde_json::from_value(settings.clone()).unwrap_or_default()
+    pub fn prepare_media(&self) -> Result<()> {
+        if !self.uploaded_dir.exists() {
+            return Err(Error::string(&format!(
+                "media root does not exist. {}",
+                self.uploaded_dir.display()
+            )));
+        }
+        if !self.uploaded_dir.is_dir() {
+            return Err(Error::string(&format!(
+                "media root is not a directory. {}",
+                self.uploaded_dir.display()
+            )));
+        }
+        std::fs::create_dir_all(self.uploaded_dir.join("audio")).map_err(|e| {
+            Error::string(&format!(
+                "cannot create audio directory in {}. {e}",
+                self.uploaded_dir.display()
+            ))
+        })?;
+        Ok(())
+    }
+
+    pub fn request_limit(&self) -> usize {
+        self.upload_file_limit + 1_048_576
     }
 }

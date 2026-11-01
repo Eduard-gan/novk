@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use loco_rs::{
     app::{AppContext, Hooks, Initializer},
-    bgworker::{BackgroundWorker, Queue},
+    bgworker::Queue,
     boot::{create_app, BootResult, StartMode},
     config::Config,
     controller::AppRoutes,
@@ -16,9 +16,8 @@ use std::path::Path;
 #[allow(unused_imports)]
 use crate::{
     controllers, initializers,
-    models::_entities::{playlist_songs, playlists, songs, users},
+    models::_entities::{genres, playlist_songs, playlists, songs, users},
     tasks,
-    workers::downloader::DownloadWorker,
 };
 
 pub struct App;
@@ -52,14 +51,35 @@ impl Hooks for App {
         )])
     }
 
-    fn routes(_ctx: &AppContext) -> AppRoutes {
+    async fn after_context(ctx: AppContext) -> Result<AppContext> {
+        crate::cookies::name(&ctx.config)?;
+        let settings = crate::settings::Settings::from_config(&ctx.config)?;
+        settings.prepare_media()?;
+        ctx.shared_store
+            .insert(crate::uploads::PendingUploads::default());
+        Ok(ctx)
+    }
+
+    async fn before_routes(ctx: &AppContext) -> Result<axum::Router<AppContext>> {
+        let router = axum::Router::new();
+        if ctx.environment == Environment::Production {
+            return Ok(router);
+        }
+        let settings = crate::settings::Settings::from_config(&ctx.config)?;
+        Ok(router.nest_service(
+            "/uploaded",
+            tower_http::services::ServeDir::new(settings.uploaded_dir)
+                .append_index_html_on_directories(false),
+        ))
+    }
+
+    fn routes(ctx: &AppContext) -> AppRoutes {
         AppRoutes::with_default_routes() // controller routes below
             .add_route(controllers::login::routes())
             .add_route(controllers::music::routes())
-            .add_route(controllers::auth::routes())
+            .add_route(controllers::music::upload_routes(ctx))
     }
-    async fn connect_workers(ctx: &AppContext, queue: &Queue) -> Result<()> {
-        queue.register(DownloadWorker::build(ctx)).await?;
+    async fn connect_workers(_ctx: &AppContext, _queue: &Queue) -> Result<()> {
         Ok(())
     }
 
@@ -72,6 +92,7 @@ impl Hooks for App {
         truncate_table(&ctx.db, playlist_songs::Entity).await?;
         truncate_table(&ctx.db, playlists::Entity).await?;
         truncate_table(&ctx.db, songs::Entity).await?;
+        truncate_table(&ctx.db, genres::Entity).await?;
         truncate_table(&ctx.db, users::Entity).await?;
         Ok(())
     }

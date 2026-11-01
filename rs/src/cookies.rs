@@ -1,42 +1,43 @@
-use cookie::{Cookie, CookieJar, Key, SameSite};
-use sha2::{Digest, Sha512};
-use uuid::Uuid;
+use cookie::{Cookie, SameSite};
+use loco_rs::{
+    config::{Config, JWTLocation, JWTLocationConfig},
+    Error, Result,
+};
 
-pub fn auth_cookie(
-    cookie_name: &str,
-    pid: Uuid,
-    server_host: &str,
-    secret: &str,
-) -> Cookie<'static> {
-    let secure = server_host.starts_with("https://");
-    let mut cookie = Cookie::build((cookie_name.to_string(), pid.to_string()))
-        .http_only(true)
-        .secure(secure)
-        .max_age(::cookie::time::Duration::days(30))
-        .same_site(SameSite::Lax)
-        .path("/");
-
-    if let Some(domain) = cookie_domain(server_host) {
-        cookie = cookie.domain(domain);
+pub fn name(config: &Config) -> Result<&str> {
+    match config.get_jwt_config()?.location.as_ref() {
+        Some(JWTLocationConfig::Single(JWTLocation::Cookie { name })) => Ok(name),
+        _ => Err(Error::string(
+            "JWT location must name exactly one authentication cookie",
+        )),
     }
-
-    let digest = Sha512::digest(secret);
-    let key = Key::from(&digest);
-    let mut jar = CookieJar::new();
-    jar.signed_mut(&key).add(cookie.build());
-    jar.get(cookie_name)
-        .expect("signed auth cookie should be present")
-        .clone()
 }
 
-pub fn verify_auth_cookie(cookie_name: &str, value: &str, secret: &str) -> Option<String> {
-    let digest = Sha512::digest(secret);
-    let key = Key::from(&digest);
-    let mut jar = CookieJar::new();
-    jar.add_original(Cookie::new(cookie_name.to_string(), value.to_string()));
-    jar.signed(&key)
-        .get(cookie_name)
-        .map(|cookie| cookie.value().to_string())
+pub fn auth_cookie(config: &Config, token: String) -> Result<Cookie<'static>> {
+    let mut cookie = Cookie::build((name(config)?.to_string(), token))
+        .http_only(true)
+        .secure(config.server.host.starts_with("https://"))
+        .max_age(cookie::time::Duration::seconds(
+            config
+                .get_jwt_config()?
+                .expiration
+                .try_into()
+                .map_err(|e| {
+                    Error::string(&format!("JWT expiration exceeds cookie duration. {e}"))
+                })?,
+        ))
+        .same_site(SameSite::Lax)
+        .path("/");
+    if let Some(domain) = cookie_domain(&config.server.host) {
+        cookie = cookie.domain(domain);
+    }
+    Ok(cookie.build())
+}
+
+pub fn removal_cookie(config: &Config) -> Result<Cookie<'static>> {
+    let mut cookie = auth_cookie(config, String::new())?;
+    cookie.make_removal();
+    Ok(cookie)
 }
 
 fn cookie_domain(server_host: &str) -> Option<String> {
@@ -49,10 +50,8 @@ fn cookie_domain(server_host: &str) -> Option<String> {
         .split(':')
         .next()
         .unwrap_or(server_host);
-
     if host == "localhost" || host.parse::<std::net::IpAddr>().is_ok() {
         return None;
     }
-
     Some(host.to_string())
 }

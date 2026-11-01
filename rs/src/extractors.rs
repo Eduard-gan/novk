@@ -1,11 +1,10 @@
+use crate::{cookies, models::users};
 use axum::{
     extract::{FromRef, FromRequestParts},
-    http::{request::Parts, StatusCode},
-    response::{IntoResponse, Response},
+    http::request::Parts,
+    response::{IntoResponse, Redirect, Response},
 };
 use loco_rs::prelude::*;
-
-use crate::{cookies, models::users, settings::Settings};
 
 pub struct CurrentUser {
     pub id: i32,
@@ -24,34 +23,24 @@ where
         state: &S,
     ) -> std::result::Result<Self, Self::Rejection> {
         let ctx = AppContext::from_ref(state);
-        let settings = Settings::from_config(&ctx.config);
+        let jwt_config = ctx.config.get_jwt_config().map_err(|e| e.into_response())?;
+        let cookie_name = cookies::name(&ctx.config).map_err(|e| e.into_response())?;
         let jar = cookie::CookieJar::from_headers(&parts.headers);
-        let Ok(jwt_secret) = ctx.config.get_jwt_config() else {
-            return Err(unauthorized());
+        let Some(cookie) = jar.get(cookie_name) else {
+            return Err(Redirect::to("/login").into_response());
         };
-
-        let Some(cookie) = jar.get(&settings.auth.cookie_name) else {
-            return Err(unauthorized());
+        let Ok(token) = loco_rs::auth::jwt::JWT::new(&jwt_config.secret).validate(cookie.value())
+        else {
+            return Err(Redirect::to("/login").into_response());
         };
-        let Some(pid) = cookies::verify_auth_cookie(
-            &settings.auth.cookie_name,
-            cookie.value(),
-            &jwt_secret.secret,
-        ) else {
-            return Err(unauthorized());
+        let user = match users::Model::find_by_pid(&ctx.db, &token.claims.pid).await {
+            Ok(user) => user,
+            Err(ModelError::EntityNotFound) => return Err(Redirect::to("/login").into_response()),
+            Err(e) => return Err(crate::errors::LibraryError::Internal(e.into()).into_response()),
         };
-
-        let Ok(user) = users::Model::find_by_pid(&ctx.db, &pid).await else {
-            return Err(unauthorized());
-        };
-
         Ok(Self {
             id: user.id,
             pid: user.pid,
         })
     }
-}
-
-fn unauthorized() -> Response {
-    StatusCode::UNAUTHORIZED.into_response()
 }

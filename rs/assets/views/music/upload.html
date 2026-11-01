@@ -1,0 +1,11 @@
+{% extends "music/form.html" %}
+{% block title %}Загрузить MP3{% endblock title %}
+{% block content %}
+<h1 class="h3 my-4">Загрузить MP3</h1>
+<form method="post" action="/music/upload" enctype="multipart/form-data" data-fetch-form data-file-limit="{{ file_limit }}">
+  <label for="file" class="form-label">Файл MP3, не больше 20 МБ</label>
+  <input id="file" name="file" type="file" accept=".mp3,audio/mpeg" class="form-control" required>
+  <p class="text-danger" data-form-error role="alert"></p>
+  <button type="submit" class="btn btn-success">Продолжить</button>
+</form>
+{% endblock content %}

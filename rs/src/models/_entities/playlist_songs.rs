@@ -10,7 +10,6 @@ pub struct Model {
     pub id: i32,
     pub playlist_id: i32,
     pub song_id: i32,
-    pub position: Option<i32>,
     pub added_at: DateTimeWithTimeZone,
 }
 
