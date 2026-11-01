@@ -3,13 +3,28 @@ use sea_orm_migration::prelude::*;
 #[derive(DeriveMigrationName)]
 pub struct Migration;
 
-const COLUMNS: [&str; 7] = ["reset_token", "reset_sent_at", "email_verification_token", "email_verification_sent_at", "email_verified_at", "magic_link_token", "magic_link_expiration"];
+const COLUMNS: [&str; 7] = [
+    "reset_token",
+    "reset_sent_at",
+    "email_verification_token",
+    "email_verification_sent_at",
+    "email_verified_at",
+    "magic_link_token",
+    "magic_link_expiration",
+];
 
 #[async_trait::async_trait]
 impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         for column in COLUMNS {
-            manager.alter_table(Table::alter().table(Alias::new("users")).drop_column(Alias::new(column)).to_owned()).await?;
+            manager
+                .alter_table(
+                    Table::alter()
+                        .table(Alias::new("users"))
+                        .drop_column(Alias::new(column))
+                        .to_owned(),
+                )
+                .await?;
         }
         Ok(())
     }
@@ -22,7 +37,14 @@ impl MigrationTrait for Migration {
             } else {
                 definition.string();
             }
-            manager.alter_table(Table::alter().table(Alias::new("users")).add_column(&mut definition).to_owned()).await?;
+            manager
+                .alter_table(
+                    Table::alter()
+                        .table(Alias::new("users"))
+                        .add_column(&mut definition)
+                        .to_owned(),
+                )
+                .await?;
         }
         Ok(())
     }

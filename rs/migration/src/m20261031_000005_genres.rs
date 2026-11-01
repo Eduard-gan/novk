@@ -9,8 +9,14 @@ impl MigrationTrait for Migration {
         Ok(())
     }
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
-        manager.get_connection().execute_unprepared("ALTER TABLE songs DROP COLUMN genre_id").await?;
-        manager.get_connection().execute_unprepared("DROP TABLE genres").await?;
+        manager
+            .get_connection()
+            .execute_unprepared("ALTER TABLE songs DROP COLUMN genre_id")
+            .await?;
+        manager
+            .get_connection()
+            .execute_unprepared("DROP TABLE genres")
+            .await?;
         Ok(())
     }
 }
