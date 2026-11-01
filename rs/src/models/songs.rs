@@ -135,8 +135,8 @@ impl SongInput {
             .and_then(|text| text.parse::<i32>().ok());
         Self {
             title: tag.title().unwrap_or_default().to_string(),
-            // id3 decodes ID3v2.3 slash separators into text values, including names such as AC/DC.
-            artist: if tag.version() == Version::Id3v23 {
+            // id3 decodes ID3v2.2 and ID3v2.3 slash separators into text values, including names such as AC/DC.
+            artist: if matches!(tag.version(), Version::Id3v22 | Version::Id3v23) {
                 tag.artists().unwrap_or_default().join("/")
             } else {
                 tag.artist().unwrap_or_default().to_string()

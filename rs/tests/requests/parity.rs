@@ -940,7 +940,10 @@ async fn ts22_save_upload() {
         )
         .unwrap();
         assert_eq!(tag.version(), Version::Id3v23);
-        assert_eq!(tag.artist(), Some("AC/DC"));
+        assert_eq!(
+            tag.artists().map(|values| values.join("/")).as_deref(),
+            Some("AC/DC")
+        );
         assert_eq!(tag.title(), Some("Back in Black"));
         assert_eq!(tag.year(), Some(1980));
         assert_eq!(tag.track(), Some(6));
@@ -1182,7 +1185,10 @@ fn unreadable_mp3(damage: TagDamage) -> Vec<u8> {
     assert_eq!(&bytes[artist_offset..artist_offset + 4], b"TPE1");
     let complete = Tag::read_from2(std::io::Cursor::new(&bytes)).unwrap();
     assert_eq!(complete.title(), Some("Back in Black"));
-    assert_eq!(complete.artist(), Some("AC/DC"));
+    assert_eq!(
+        complete.artists().map(|values| values.join("/")).as_deref(),
+        Some("AC/DC")
+    );
     bytes.extend_from_slice(&mp3(false, false));
     match damage {
         TagDamage::Header => bytes[5] = 0x01,
