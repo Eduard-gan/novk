@@ -153,7 +153,7 @@ def main() -> None:
     remote_app_dir = "/opt/novk"
     remote_data_dir = "/mnt/novk-data/data/novk"
     remote_db_path = f"{remote_data_dir}/novk.sqlite"
-    remote_audio_dir = f"{remote_data_dir}/audio"
+    remote_audio_dir = f"{remote_data_dir}/static/uploaded/audio"
 
     print(f"[START] Deploying novk to {target}...")
 

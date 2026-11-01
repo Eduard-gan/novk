@@ -13,7 +13,7 @@ Environment=DOMAIN=novk.localplayer.dev
 Environment=DATABASE_URL=sqlite:///mnt/novk-data/data/novk/novk.sqlite?mode=rwc
 Environment=JWT_SECRET=4eb3ea3431e334b3d9c4b1e1becc583381892d4038ea555e2b8aebd2d7e25da95ccaf88b72134faf29859d040842acc6c67d8f500ed52eafc9dc65c2e7bb9039
 Environment=TZ=Europe/Belgrade
-Environment=NOVK_UPLOADED_DIR=/mnt/novk-data/data/novk
+Environment=NOVK_UPLOADED_DIR=/mnt/novk-data/data/novk/static/uploaded
 ExecStart=/opt/novk/novk-cli start
 Restart=always
 RestartSec=3
