@@ -83,8 +83,14 @@ def build_binary(skip_build: bool) -> None:
     )
 
 
+def stop_remote_service(target: str) -> None:
+    """Stop the remote service before updating files."""
+    print("[INFO] Stopping novk.service before update...")
+    run_remote_ssh(target=target, remote_command="systemctl stop novk.service 2>/dev/null || true")
+
+
 def deploy_app_and_service(target: str, remote_app_dir: str) -> None:
-    """Copy binary, configs, assets, and service file to server."""
+    """Copy service file, binary, configs, and assets to server."""
     bin_path = REPO_ROOT / "rs" / "target" / "release" / "novk-cli"
     if not bin_path.is_file():
         raise RuntimeError(f"Binary not found at {bin_path}. Run build first.")
@@ -99,13 +105,13 @@ def deploy_app_and_service(target: str, remote_app_dir: str) -> None:
         remote_command=f"mkdir -p {remote_app_dir}/config {remote_app_dir}/assets",
     )
 
+    print(f"[INFO] Updating novk.service on {target}:/etc/systemd/system/...")
+    run_command(command=["scp", str(service_file), f"{target}:/etc/systemd/system/novk.service"])
+    run_remote_ssh(target=target, remote_command="systemctl daemon-reload && systemctl enable novk.service")
+
     print(f"[INFO] Copying binary to {target}:{remote_app_dir}/novk-cli...")
-    tmp_bin = f"{remote_app_dir}/novk-cli.new"
-    run_command(command=["scp", str(bin_path), f"{target}:{tmp_bin}"])
-    run_remote_ssh(
-        target=target,
-        remote_command=f"mv -f {tmp_bin} {remote_app_dir}/novk-cli && chmod 755 {remote_app_dir}/novk-cli",
-    )
+    run_command(command=["scp", str(bin_path), f"{target}:{remote_app_dir}/novk-cli"])
+    run_remote_ssh(target=target, remote_command=f"chmod 755 {remote_app_dir}/novk-cli")
 
     print(f"[INFO] Copying config files to {target}:{remote_app_dir}/config/...")
     config_items = [str(p) for p in config_dir.iterdir()]
@@ -117,17 +123,12 @@ def deploy_app_and_service(target: str, remote_app_dir: str) -> None:
     if assets_items:
         run_command(command=["scp", "-r", *assets_items, f"{target}:{remote_app_dir}/assets/"])
 
-    print(f"[INFO] Copying novk.service to {target}:/etc/systemd/system/...")
-    run_command(command=["scp", str(service_file), f"{target}:/etc/systemd/system/novk.service"])
 
-
-def manage_remote_service(target: str) -> None:
-    """Reload systemd and restart the novk service."""
-    print("[INFO] Registering and managing remote systemd service...")
+def start_remote_service(target: str) -> None:
+    """Start the novk service and check status."""
+    print("[INFO] Starting novk.service and checking status...")
     remote_script = (
-        "systemctl daemon-reload && "
-        "systemctl enable novk.service && "
-        "systemctl restart novk.service && "
+        "systemctl start novk.service && "
         "systemctl status novk.service --no-pager"
     )
     run_remote_ssh(target=target, remote_command=remote_script)
@@ -178,11 +179,14 @@ def main() -> None:
         # Step 4: Build locally
         build_binary(skip_build=args.skip_build)
 
-        # Step 5: Transfer files
+        # Step 5: Stop running service
+        stop_remote_service(target=target)
+
+        # Step 6: Transfer service file, binary, configs, and assets
         deploy_app_and_service(target=target, remote_app_dir=remote_app_dir)
 
-        # Step 6: Reload and start/restart service
-        manage_remote_service(target=target)
+        # Step 7: Start service and verify status
+        start_remote_service(target=target)
 
         print("[SUCCESS] Deployment completed successfully.")
 
