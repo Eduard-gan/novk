@@ -14,6 +14,7 @@ services:
       PORT: 5150
       DATABASE_URL: sqlite:///mnt/novk-data/data/novk/novk.sqlite?mode=rwc
       TZ: Europe/Belgrade
+      NOVK_UPLOADED_DIR: /mnt/novk-data/data/novk/static/uploaded
     ports:
       - "127.0.0.1:5150:5150"
     volumes:

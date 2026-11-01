@@ -175,7 +175,7 @@
       </section>
 
       <section class="login-pane">
-        <form class="login-form" method="post" action="/login">
+        <form class="login-form" method="post" action="/login" data-fetch-form>
           <h1>Вход</h1>
           <p>Доступ к музыкальной библиотеке.</p>
 
@@ -186,9 +186,9 @@
           <input id="password" name="password" type="password" autocomplete="current-password" required>
 
           <button type="submit">Войти</button>
-          <div class="form-note">Регистрация отключена.</div>
+          <div class="form-note" data-form-error role="alert"></div>
         </form>
       </section>
     </main>
-  </body>
+  <script src="/static/js/forms.js" defer></script></body>
 </html>

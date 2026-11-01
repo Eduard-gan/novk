@@ -19,12 +19,19 @@ pub struct Model {
     #[sea_orm(unique)]
     pub file_path: String,
     pub original_filename: Option<String>,
-    pub file_size_bytes: Option<i64>,
+    pub genre_id: Option<i32>,
     pub uploaded_at: DateTimeWithTimeZone,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
+    #[sea_orm(
+        belongs_to = "super::genres::Entity",
+        from = "Column::GenreId",
+        to = "super::genres::Column::Id",
+        on_delete = "Restrict"
+    )]
+    Genres,
     #[sea_orm(has_many = "super::playlist_songs::Entity")]
     PlaylistSongs,
 }
@@ -36,3 +43,9 @@ impl Related<super::playlist_songs::Entity> for Entity {
 }
 
 impl ActiveModelBehavior for ActiveModel {}
+
+impl Related<super::genres::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Genres.def()
+    }
+}

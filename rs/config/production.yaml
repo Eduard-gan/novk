@@ -48,6 +48,10 @@ auth:
     secret: {{ get_env(name="JWT_SECRET") }}
     expiration: 604800
 
+    location:
+      from: Cookie
+      name: auth
+
 settings:
-  auth:
-    cookie_name: auth
+  uploaded_dir: {{ get_env(name="NOVK_UPLOADED_DIR") | json_encode() }}
+  upload_file_limit: 20971520

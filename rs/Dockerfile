@@ -28,8 +28,8 @@ COPY --from=builder /build/target/release/novk-cli .
 COPY --from=builder /build/config ./config
 COPY --from=builder /build/assets ./assets
 
-RUN mkdir -p /data /uploaded \
-    && chown -R appuser:appuser /app /data /uploaded
+RUN mkdir -p /data \
+    && chown -R appuser:appuser /app /data
 
 USER appuser
 ENV LOCO_ENV=production

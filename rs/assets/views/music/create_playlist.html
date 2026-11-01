@@ -1,0 +1,11 @@
+{% extends "music/form.html" %}
+{% block title %}Создать плэйлист{% endblock title %}
+{% block content %}
+<h1 class="h3 my-4">Создать плэйлист</h1>
+<form method="post" action="/music/create-playlist" data-fetch-form>
+  <label for="name" class="form-label">Название</label>
+  <input id="name" name="name" class="form-control" required maxlength="32">
+  <p class="text-danger" data-form-error role="alert"></p>
+  <button type="submit" class="btn btn-success">Создать</button>
+</form>
+{% endblock content %}
