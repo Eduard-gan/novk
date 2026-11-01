@@ -6,6 +6,7 @@ use axum::{
     },
 };
 use id3::{Tag, TagLike, Version};
+use loco_rs::testing::selector::{assert_attribute_eq, assert_css_eq_list};
 use loco_rs::{app::AppContext, testing::request::request_with_create_db};
 use novk::{
     app::App,
@@ -777,9 +778,10 @@ async fn ts19_upload_tags() {
             .await;
         response.assert_status(StatusCode::OK);
         let html = response.text();
-        for value in ["AC/DC", "Back in Black", "1980", "value=\"6\"", "Hard Rock"] {
+        for value in ["Back in Black", "1980", "value=\"6\"", "Hard Rock"] {
             assert!(html.contains(value));
         }
+        assert_attribute_eq(&html, "input[name=artist]", "value", "AC/DC");
         uuid_from_html(&html);
     })
     .await;
@@ -966,7 +968,11 @@ async fn ts22_save_upload() {
             .add_header(COOKIE, cookie(&ctx, &anna))
             .await
             .text();
-        assert!(html.find("AC/DC - Back in Black").unwrap() < html.find("Artist - Old").unwrap());
+        assert_css_eq_list(
+            &html,
+            "#SongTable .track-title",
+            &["AC/DC - Back in Black", "Artist - Old"],
+        );
         let columns = ctx
             .db
             .query_all(sea_orm::Statement::from_string(
@@ -1348,7 +1354,11 @@ async fn ts27_unreadable_tags_preserve_original_bytes() {
             .await;
         response.assert_status(StatusCode::OK);
         let html = response.text();
-        assert_eq!(html.matches("AC/DC - Back in Black").count(), 2);
+        assert_css_eq_list(
+            &html,
+            "#SongTable .track-title",
+            &["AC/DC - Back in Black", "AC/DC - Back in Black"],
+        );
         let old = format!("id=\"{}\"", saved_ids[0]);
         let new = format!("id=\"{}\"", saved_ids[1]);
         assert!(html.find(&new).unwrap() < html.find(&old).unwrap());
