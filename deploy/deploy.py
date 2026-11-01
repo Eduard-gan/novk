@@ -3,6 +3,7 @@
 
 import argparse
 from pathlib import Path
+import shlex
 import subprocess
 import sys
 
@@ -18,10 +19,11 @@ def run_command(command: list[str]) -> None:
 
 
 def run_remote_ssh(target: str, remote_command: str) -> subprocess.CompletedProcess:
-    """Execute a command on the remote target host over SSH."""
+    """Execute a command on the remote target host over SSH via POSIX sh."""
     print(f"[SSH] {target} -> {remote_command}")
+    sh_command = f"sh -c {shlex.quote(remote_command)}"
     return subprocess.run(
-        args=["ssh", target, remote_command],
+        args=["ssh", target, sh_command],
         check=True,
     )
 
@@ -115,18 +117,12 @@ def deploy_app_and_service(target: str, remote_app_dir: str) -> None:
 
 
 def manage_remote_service(target: str) -> None:
-    """Reload systemd and start or restart the novk service based on status."""
+    """Reload systemd and restart the novk service."""
     print("[INFO] Registering and managing remote systemd service...")
     remote_script = (
         "systemctl daemon-reload && "
         "systemctl enable novk.service && "
-        "if systemctl is-active --quiet novk.service; then "
-        "  echo '[INFO] Service is active. Restarting novk.service...' && "
-        "  systemctl restart novk.service; "
-        "else "
-        "  echo '[INFO] Service is inactive. Starting novk.service...' && "
-        "  systemctl start novk.service; "
-        "fi && "
+        "systemctl restart novk.service && "
         "systemctl status novk.service --no-pager"
     )
     run_remote_ssh(target=target, remote_command=remote_script)
