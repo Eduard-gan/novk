@@ -42,6 +42,7 @@ unic-langid = { version = "0.9" }
 axum-extra = { version = "0.10", features = ["form"] }
 cookie = { version = "0.18", features = ["secure"] }
 sha2 = { version = "0.10" }
+tower-http = { version = "0.6", features = ["fs"] }
 
 [[bin]]
 name = "novk-cli"

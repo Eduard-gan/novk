@@ -1,2 +1,4 @@
 .idea/
 global_env
+__pycache__/
+*.pyc

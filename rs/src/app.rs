@@ -47,9 +47,10 @@ impl Hooks for App {
     }
 
     async fn initializers(_ctx: &AppContext) -> Result<Vec<Box<dyn Initializer>>> {
-        Ok(vec![Box::new(
-            initializers::view_engine::ViewEngineInitializer,
-        )])
+        Ok(vec![
+            Box::new(initializers::view_engine::ViewEngineInitializer),
+            Box::new(initializers::audio_static::AudioStaticInitializer),
+        ])
     }
 
     fn routes(_ctx: &AppContext) -> AppRoutes {
