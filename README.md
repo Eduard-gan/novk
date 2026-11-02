@@ -1,35 +1,30 @@
 # NOVK
 
-NOVK is a server-rendered music library and streaming service built with Rust and Loco.rs (Axum, SeaORM, SQLite, and Tera templates).
+NOVK is a simple online music player.
 
 ---
+## Stack
 
-## 1. Stack and Architecture
-
-- **Language & Framework:** Rust (edition 2021), Loco.rs 0.16.4.
-- **Database:** SQLite with SeaORM.
-- **UI:** Server-side rendered HTML (Tera templates), vanilla JavaScript audio player.
-- **Media Storage:** Filesystem storage for MP3 files (`UPLOADED_DIR`).
-- **Web Server:** Caddy as reverse proxy (TLS termination).
-- **Deployment:** Bare-metal via local build, `scp`, and `systemd` (no containers).
-
+- **Language & Framework:** `Rust` + `Loco.rs`
+- **Database:** `SQLite` + `SeaORM`
+- **UI:** `HTML5` + `JS` for audio player.
+- **Deployment:** Bare-metal via local binary build + `scp` and `systemd`.
 ---
 
-## 2. Prerequisites
+## Prerequisites
 
 ### Local Machine (Development & Deployment)
-- **Rust:** Stable toolchain (`rustup`, `cargo`).
-- **Python 3:** Required to execute the deployment script (`deploy/deploy.py`).
-- **SSH access:** SSH key access to the target host (e.g. `ssh root@novk.localplayer.dev`).
+- **Rust:** Stable toolchain.
+- **Python 3:** For deployment script `deploy/deploy.py`.
+- **SSH access:** SSH passwordless key access to the target host e.g. `ssh root@novk.localplayer.dev`
 
 ### Target Server
 - **OS:** Linux with `systemd`.
 - **Web Server:** Caddy installed and running.
 - **Storage:** Persistent directories for data and media (e.g. `/mnt/novk-data/`).
-
 ---
 
-## 3. Local Development
+## Local Development
 
 ### 1. Build and verify
 ```bash
@@ -54,7 +49,7 @@ The application will listen on `http://127.0.0.1:8000`.
 
 ---
 
-## 4. Deployment
+## Deployment
 
 Deployment is performed from your local machine directly to the target server via systemd and SSH.
 
@@ -95,7 +90,7 @@ The script automatically executes the following pipeline:
 
 ---
 
-## 5. Caddy Configuration
+## Caddy Configuration
 
 Caddy handles HTTPS and forwards all traffic to the application:
 
