@@ -4,3 +4,4 @@ __pycache__/
 *.pyc
 deploy/audio/
 deploy/*.sqlite*
+deploy/.env

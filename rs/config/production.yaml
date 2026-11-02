@@ -5,14 +5,14 @@ logger:
   format: json
 
 server:
-  port: {{ get_env(name="PORT", default="5150") }}
-  binding: {{ get_env(name="BINDING", default="127.0.0.1") }}
-  host: https://{{ get_env(name="DOMAIN", default="novk.local") }}
+  port: {{ get_env(name="PORT", default="8000") }}
+  binding: {{ get_env(name="BINDING", default="172.18.0.1") }}
+  host: https://{{ get_env(name="DOMAIN") }}
   middlewares:
     cors:
       enable: true
       allow_origins:
-        - https://{{ get_env(name="DOMAIN", default="novk.local") }}
+        - https://{{ get_env(name="DOMAIN") }}
       allow_methods:
         - GET
         - POST
@@ -53,5 +53,5 @@ auth:
       name: auth
 
 settings:
-  uploaded_dir: {{ get_env(name="NOVK_UPLOADED_DIR") | json_encode() }}
+  uploaded_dir: {{ get_env(name="UPLOADED_DIR") | json_encode() }}
   upload_file_limit: 20971520

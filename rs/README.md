@@ -1,320 +1,110 @@
 # NOVK
 
-NOVK — небольшой server-rendered музыкальный сервис на Rust/Loco.rs. Это
-переписывание старого Django-приложения без сохранения старой схемы один в
-один.
+NOVK is a server-rendered music library and streaming service built with Rust and Loco.rs (Axum, SeaORM, SQLite, and Tera templates).
 
-Приложение поддерживает вход, плейлисты, загрузку MP3 с редактированием тегов
-и воспроизведение музыки из SQLite и файлового хранилища.
+---
 
-## Текущее состояние
+## 1. Stack and Architecture
 
-Готово:
+- **Language & Framework:** Rust (edition 2021), Loco.rs 0.16.4.
+- **Database:** SQLite with SeaORM.
+- **UI:** Server-side rendered HTML (Tera templates), vanilla JavaScript audio player.
+- **Media Storage:** Filesystem storage for MP3 files (`UPLOADED_DIR`).
+- **Web Server:** Caddy as reverse proxy (TLS termination).
+- **Deployment:** Bare-metal via local build, `scp`, and `systemd` (no containers).
 
-- cookie-based login через `GET /login` и `POST /login`;
-- JWT Loco в HttpOnly cookie, срок по конфигурации, выход;
-- защита SSR-страниц через `CurrentUser`;
-- SQLite schema для `users`, `songs`, `genres`, `playlists`, `playlist_songs`;
-- автоматическая «Медиатека», выбор плейлиста, новые песни сверху;
-- создание плейлистов и добавление существующих песен через UI;
-- загрузка MP3 до 20 МиБ в два шага, редактирование ID3v2.3 с сохранением обложки;
-- импорт старого дампа в текущую локальную `novk.sqlite`;
-- Dockerfile и `docker-compose.yml` для запуска приложения без Caddy.
+---
 
-Вне объёма:
+## 2. Prerequisites
 
-- регистрация, API аутентификации стартера, админка;
-- удаление песен из плейлистов;
-- импорт дампа как повторяемый task.
+### Local Machine (Development & Deployment)
+- **Rust:** Stable toolchain (`rustup`, `cargo`).
+- **Python 3:** Required to execute the deployment script (`deploy/deploy.py`).
+- **SSH access:** SSH key access to the target host (e.g. `ssh root@novk.localplayer.dev`).
 
-## Данные
+### Target Server
+- **OS:** Linux with `systemd`.
+- **Web Server:** Caddy installed and running.
+- **Storage:** Persistent directories for data and media (e.g. `/mnt/novk-data/`).
 
-SQLite — основная БД.
+---
 
-Минимальная музыкальная схема:
+## 3. Local Development
 
-```text
-songs
-- id
-- title
-- artist
-- album nullable
-- year nullable
-- comment nullable
-- track nullable
-- file_path unique
-- original_filename nullable
-- genre_id -> genres.id nullable, ON DELETE RESTRICT
-- uploaded_at
-- created_at
-- updated_at
-
-playlists
-- id
-- user_id -> users.id
-- name
-- is_default
-- created_at
-- updated_at
-- unique(user_id, name)
-- unique(user_id) WHERE is_default = 1
-
-playlist_songs
-- id
-- playlist_id -> playlists.id
-- song_id -> songs.id
-- added_at
-- unique(playlist_id, song_id)
-
-genres
-- id
-- name unique
-```
-
-Старый Django `audio_playlist.number` в новую схему не переносится.
-Плейлист и связь песни с плейлистом разделены на разные таблицы.
-
-## Файлы
-
-Статика приложения и загруженная музыка разделены:
-
-```text
-/static/...    CSS, JavaScript, изображения приложения
-/uploaded/...  MP3-файлы медиатеки
-```
-
-В БД `songs.file_path` хранится относительный путь внутри uploaded-root:
-
-```text
-audio/0001_Buffalo Tom - Summer.mp3
-```
-
-На фронт он отдается как:
-
-```text
-/uploaded/audio/0001_Buffalo Tom - Summer.mp3
-```
-
-Caddy управляется отдельно и в production отдаёт `/uploaded/...` из каталога
-`/mnt/novk-data/data/novk/static/uploaded`. Compose монтирует `/mnt/novk-data`
-по тому же пути. В development приложение отдаёт `/uploaded` само.
-
-Корень медиа задаётся `settings.uploaded_dir` из `NOVK_UPLOADED_DIR`. В development
-значение по умолчанию `assets/static/uploaded`. В production переменная обязательна.
-Корень должен существовать и быть каталогом. Приложение создаёт только `audio/`.
-Лимит файла `settings.upload_file_limit` равен 20 971 520 байт. Лимит multipart
-равен лимиту файла плюс 1 048 576 байт и действует только на POST загрузки.
-
-Незавершённая загрузка хранится в памяти, одна на пользователя, 30 минут.
-Новая успешная загрузка заменяет прежнюю. Перезапуск очищает все слоты.
-На диск файл попадает при подтверждении, как `audio/<uuid>.mp3`. Жанры
-нормализуются по Unicode в нижний регистр с одним пробелом между словами.
-Песня, жанр и связь с «Медиатекой» сохраняются в одной транзакции.
-
-## Локальный запуск
-
+### 1. Build and verify
 ```bash
-cargo loco start
+cargo check --manifest-path rs/Cargo.toml
 ```
 
-Создать пользователя:
-
+### 2. Apply database migrations
+From repository root:
 ```bash
-cargo loco task users.create email:admin@novk.local password:12345678 name:Admin
+cargo loco db migrate --manifest-path rs/Cargo.toml
 ```
 
-Применить миграции:
-
+### 3. Create an initial user
 ```bash
-cargo loco db migrate
+cargo loco task users.create email:admin@novk.local password:secretpassword name:Admin --manifest-path rs/Cargo.toml
 ```
 
-Проверить сборку:
-
+### 4. Start local server
 ```bash
-cargo check
+cd rs && cargo loco start
 ```
+The application will listen on `http://127.0.0.1:8000`.
 
-## Модели и миграции
+---
 
-По образцу `erp-backend` есть Makefile:
+## 4. Deployment
 
+Deployment is performed from your local machine directly to the target server via systemd and SSH.
+
+### Step 1: Configure Environment
+Ensure `deploy/.env` exists locally (ignored by Git). If not, create it from the template:
 ```bash
-make migrate
-make models
+cp deploy/.env.example deploy/.env
 ```
-
-`make models` генерирует SeaORM entities из текущего состояния БД в
-`src/models/_entities`.
-
-По умолчанию используется:
-
-```text
-sqlite://novk.sqlite?mode=rwc
-```
-
-Можно переопределить:
-
+Generate a secure JWT secret:
 ```bash
-make models DATABASE_URL='sqlite:///var/lib/novk/novk.sqlite?mode=rwc'
+openssl rand -hex 64
 ```
-
-## Docker Compose
-
-Caddy в compose не входит. Он управляется внешне.
-
-Собрать и запустить приложение:
-
-```bash
-docker compose build novk
-docker compose up -d
-```
-
-Compose ожидает `.env`.
-
-Пример:
-
-```env
-JWT_SECRET=openssl rand -hex 64
-DOMAIN=novk.example.com
-NOVK_DATA_DIR=./data
-NOVK_UPLOADED_DIR=/mnt/novk-data/data/novk/static/uploaded
-```
-
-Важно: значение `JWT_SECRET` должно быть реальным секретом. Строка в
-`.env.example` показывает команду генерации, а не готовое значение.
-
-В compose:
-
-- SQLite берется из `DATABASE_URL`;
-- приложение получает доступ к серверному дереву `/mnt/novk-data` по тому же
-  абсолютному пути внутри контейнера;
-- приложение слушает `127.0.0.1:5150` на хосте;
-- внутри контейнера используется
-  `DATABASE_URL=sqlite:///mnt/novk-data/data/novk/novk.sqlite?mode=rwc`;
-- `LOCO_ENV=production`;
-- `auto_migrate=true`.
-
-Для текущей серверной раскладки:
-
-```text
-/mnt/novk-data/services/        код и docker-compose.yml
-/mnt/novk-data/data/novk/       persistent data приложения
-/mnt/novk-data/data/novk/static/uploaded/audio/  старые MP3-файлы
-```
-
-`.env` рядом с compose должен указывать:
-
-```env
+Fill in `deploy/.env`:
+```ini
+LOCO_ENV=production
+PORT=8000
+BINDING=172.18.0.1
+DOMAIN=novk.localplayer.dev
 DATABASE_URL=sqlite:///mnt/novk-data/data/novk/novk.sqlite?mode=rwc
+JWT_SECRET=<your-generated-hex-key>
+TZ=CET
+UPLOADED_DIR=/mnt/novk-data/data/novk/static/uploaded
 ```
 
-При такой раскладке `songs.file_path = 'audio/file.mp3'` превращается в URL
-`/uploaded/audio/file.mp3`, а Caddy должен отдавать этот URL из каталога
-`/mnt/novk-data/data/novk/static/uploaded`.
+### Step 2: Run Deployment
+Execute the deployment script:
+```bash
+python3 deploy/deploy.py root@novk.localplayer.dev
+```
 
-## Caddy
+The script automatically executes the following pipeline:
+1. Verifies and creates remote directories (`/opt/novk`, `/mnt/novk-data/...`).
+2. Backs up remote database and uploads local `deploy/novk.sqlite` or `deploy/audio/` (if present).
+3. Compiles the release binary locally (`cargo build --release`).
+4. Stops the running remote service (`systemctl stop novk.service`).
+5. Uploads `deploy/.env` (`chmod 600`), unit file `deploy/novk.service`, binary (`chmod 755`), configs, and assets to `/opt/novk`.
+6. Reloads `systemd`, starts `novk.service`, and outputs service status.
 
-Caddy управляется отдельно от приложения. Минимальный фрагмент Caddyfile:
+---
+
+## 5. Caddy Configuration
+
+Caddy handles HTTPS and forwards all traffic to the application:
 
 ```caddyfile
-novk.example.com {
-	handle_path /uploaded/* {
-		root * /mnt/novk-data/data/novk/static/uploaded
-		file_server
-	}
-
-	handle {
-		reverse_proxy 127.0.0.1:5150
-	}
+novk.localplayer.dev {
+	reverse_proxy 172.18.0.1:8000
 }
 ```
 
-Для реального домена заменить `novk.example.com` на значение `DOMAIN`.
-
-Важно:
-
-- `/uploaded/*` должен обрабатываться до `reverse_proxy`;
-- приложение само не раздает MP3-файлы в production;
-- путь `/mnt/novk-data/data/novk/static/uploaded` должен содержать каталог
-  `audio/` со старыми файлами;
-- `DOMAIN` в `.env` задается без схемы, например `novk.example.com`.
-
-## Импорт старого дампа
-
-Локально был импортирован `/home/ed/dump.sql`:
-
-- `audio_song` -> `songs`;
-- только старый плейлист `Медиатека` -> `playlists`;
-- строки `audio_playlist` с `name = 'Медиатека'` -> `playlist_songs`;
-- старое поле `number` проигнорировано;
-- мусорные тестовые плейлисты из старой БД проигнорированы.
-
-Итог локального импорта:
-
-```text
-songs: 685
-playlists: 1
-playlist_songs: 685
-```
-
-## Роуты
-
-Сейчас используются:
-
-```text
-GET  /
-GET  /login
-POST /login
-GET  /logout
-GET  /music
-GET  /music/upload
-POST /music/upload
-GET  /music/upload/confirm
-POST /music/upload/confirm
-GET  /music/create-playlist
-POST /music/create-playlist
-POST /music/ajax/playlist-operations
-```
-
-`GET /` перенаправляет на `/music`. Защищённые страницы без действующей cookie
-перенаправляют на `/login`. Вход по email выдаёт JWT Loco, проверяется подпись
-и срок действия. Имя cookie хранится только в `auth.jwt.location`, тип `Cookie`.
-Атрибуты cookie `HttpOnly`, `SameSite=Lax`, `Path=/`, `Secure` при HTTPS.
-Выход удаляет cookie, но не отзывает JWT на сервере.
-
-Отказы обработчиков имеют код 409 и `application/problem+json` с `type`, `title`,
-`status`, `detail`, а при ошибке поля также `field`. Формы требуют JavaScript
-и отправляются через fetch. После успешного POST используется 303, шаг загрузки
-ведёт на `/music/upload/confirm`. AJAX возвращает текст при успехе и problem
-при отказе. Неизвестный маршрут даёт 404, внутренний сбой 500.
-В development и test fallback Loco выключен. CSRF-защита не используется.
-
-## Проверки
-
-CODER выполняет `cargo check --manifest-path rs/Cargo.toml` и
-`cargo clippy --manifest-path rs/Cargo.toml --all-targets` из корня репозитория.
-TS-01–25 находятся в `tests/requests/parity.rs` и unit-модулях `genres`, `uploads`.
-TS-26 и TS-27 проверяют нечитаемые ID3-теги и сохранение исходных байтов.
-Для запуска тестов QA использует `cargo test --manifest-path rs/Cargo.toml`.
-HTTP-тесты создают изолированные SQLite и каталоги медиа. Не используйте
-пользовательскую БД для проверки миграций. Перед миграцией существующих данных
-нужна резервная копия.
-
-Нечитаемый ID3-тег не блокирует загрузку. Форма получает поля из кадров,
-которые `id3` успел прочитать. Поле с ошибкой и все последующие остаются пустыми.
-Если не читается заголовок, пустыми остаются все поля. При создании загрузки
-пишется одно событие warn с названием ErrorKind, без содержимого файла.
-При подтверждении и сохранении событие не повторяется. Для такой загрузки файл
-сохраняется побайтно как загружен, значения формы сохраняются только в БД.
-В скачанном файле остаются исходные теги. Читаемые теги и файлы без тегов
-сохраняются с ID3v2.3, как обычно.
-
-## Production Notes
-
-- `JWT_SECRET` должен быть стабильным между рестартами. При смене секрета все
-  auth-cookie станут недействительными.
-- `DOMAIN` задается без схемы, например `novk.example.com`.
-- Caddy должен проксировать приложение на `127.0.0.1:5150`.
-- Caddy должен отдельно отдавать `/uploaded/...` из каталога с MP3.
-- SQLite-файл и uploaded-каталог должны жить на persistent storage.
+> **Network Binding & Security:**  
+> The service binds to `172.18.0.1` (the internal Docker bridge gateway IP). Because Caddy runs inside a container, it connects to the host service via `172.18.0.1:8000`. This enables reverse proxying from Caddy while keeping port `8000` completely closed to the public internet (external interfaces do not listen on port 8000).

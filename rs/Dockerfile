@@ -33,5 +33,5 @@ RUN mkdir -p /data \
 
 USER appuser
 ENV LOCO_ENV=production
-EXPOSE 5150
+EXPOSE 8000
 CMD ["./novk-cli", "start"]

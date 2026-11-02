@@ -68,7 +68,7 @@ where playlists.name = 'Медиатека'
 
 ## Настройки медиа и входа
 
-В production задайте `NOVK_UPLOADED_DIR=/mnt/novk-data/data/novk/static/uploaded`.
+В production задайте `UPLOADED_DIR=/mnt/novk-data/data/novk/static/uploaded`.
 Корень должен существовать, приложение создаёт только `audio/`. Caddy отдаёт
 `/uploaded`. В development корень по умолчанию `assets/static/uploaded`, раздача
 идёт через приложение. В `settings.upload_file_limit` задано 20 971 520 байт.

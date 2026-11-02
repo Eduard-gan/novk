@@ -64,12 +64,8 @@ def deploy_audio(target: str, remote_audio_dir: str) -> None:
     print("[INFO] Audio files copied successfully.")
 
 
-def build_binary(skip_build: bool) -> None:
-    """Compile the Rust binary in release mode if not skipped."""
-    if skip_build:
-        print("[INFO] Skipping local cargo build as requested.")
-        return
-
+def build_binary() -> None:
+    """Compile the Rust binary in release mode."""
     cargo_manifest = REPO_ROOT / "rs" / "Cargo.toml"
     print("[INFO] Building Rust binary in release mode...")
     run_command(
@@ -81,6 +77,18 @@ def build_binary(skip_build: bool) -> None:
             str(cargo_manifest),
         ]
     )
+
+
+def deploy_env(target: str, remote_app_dir: str) -> None:
+    """Check for .env in deploy directory and copy with restricted permissions."""
+    local_env = DEPLOY_DIR / ".env"
+    if not local_env.is_file():
+        print(f"[WARN] Environment file {local_env} not found, skipping.")
+        return
+
+    print(f"[INFO] Copying {local_env} to {target}:{remote_app_dir}/.env...")
+    run_command(command=["scp", str(local_env), f"{target}:{remote_app_dir}/.env"])
+    run_remote_ssh(target=target, remote_command=f"chmod 600 {remote_app_dir}/.env")
 
 
 def stop_remote_service(target: str) -> None:
@@ -143,11 +151,6 @@ def parse_arguments() -> argparse.Namespace:
         default="root@novk.localplayer.dev",
         help="Target SSH host (default: root@novk.localplayer.dev)",
     )
-    parser.add_argument(
-        "--skip-build",
-        action="store_true",
-        help="Skip local cargo build step",
-    )
     return parser.parse_args()
 
 
@@ -177,12 +180,13 @@ def main() -> None:
         deploy_audio(target=target, remote_audio_dir=remote_audio_dir)
 
         # Step 4: Build locally
-        build_binary(skip_build=args.skip_build)
+        build_binary()
 
         # Step 5: Stop running service
         stop_remote_service(target=target)
 
-        # Step 6: Transfer service file, binary, configs, and assets
+        # Step 6: Transfer environment, service file, binary, configs, and assets
+        deploy_env(target=target, remote_app_dir=remote_app_dir)
         deploy_app_and_service(target=target, remote_app_dir=remote_app_dir)
 
         # Step 7: Start service and verify status

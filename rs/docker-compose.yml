@@ -10,12 +10,12 @@ services:
       - .env
     environment:
       LOCO_ENV: production
-      BINDING: 0.0.0.0
-      PORT: 5150
+      BINDING: 172.18.0.1
+      PORT: 8000
       DATABASE_URL: sqlite:///mnt/novk-data/data/novk/novk.sqlite?mode=rwc
-      TZ: Europe/Belgrade
-      NOVK_UPLOADED_DIR: /mnt/novk-data/data/novk/static/uploaded
+      TZ: CET
+      UPLOADED_DIR: /mnt/novk-data/data/novk/static/uploaded
     ports:
-      - "127.0.0.1:5150:5150"
+      - "127.0.0.1:8000:8000"
     volumes:
       - /mnt/novk-data:/mnt/novk-data
