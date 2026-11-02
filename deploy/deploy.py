@@ -66,7 +66,7 @@ def deploy_audio(target: str, remote_audio_dir: str) -> None:
 
 def build_binary() -> None:
     """Compile the Rust binary in release mode."""
-    cargo_manifest = REPO_ROOT / "rs" / "Cargo.toml"
+    cargo_manifest = REPO_ROOT / "Cargo.toml"
     print("[INFO] Building Rust binary in release mode...")
     run_command(
         command=[
@@ -99,12 +99,12 @@ def stop_remote_service(target: str) -> None:
 
 def deploy_app_and_service(target: str, remote_app_dir: str) -> None:
     """Copy service file, binary, configs, and assets to server."""
-    bin_path = REPO_ROOT / "rs" / "target" / "release" / "novk-cli"
+    bin_path = REPO_ROOT / "target" / "release" / "novk-cli"
     if not bin_path.is_file():
         raise RuntimeError(f"Binary not found at {bin_path}. Run build first.")
 
-    config_dir = REPO_ROOT / "rs" / "config"
-    assets_dir = REPO_ROOT / "rs" / "assets"
+    config_dir = REPO_ROOT / "config"
+    assets_dir = REPO_ROOT / "assets"
     service_file = DEPLOY_DIR / "novk.service"
 
     print(f"[INFO] Ensuring directories on {target}...")

@@ -1,6 +1,0 @@
-- name: Apply all migrations
-  command: "docker exec novk_g python ./manage.py migrate"
-  register: migrate_output
-
-- debug:
-    var: migrate_output

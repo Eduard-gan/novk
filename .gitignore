@@ -1,7 +1,42 @@
-.idea/
-global_env
-__pycache__/
-*.pyc
+# Rust / Cargo
+/target/
+debug/
+**/*.rs.bk
+*.pdb
+
+# Databases
+*.sqlite*
+*.db
+*.db-*
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
 deploy/audio/
-deploy/*.sqlite*
-deploy/.env
+
+# Local media uploads (keep demo track for tests)
+assets/static/uploaded/*
+!assets/static/uploaded/audio/
+assets/static/uploaded/audio/*
+!assets/static/uploaded/audio/demo.mp3
+
+# Python (deploy scripts)
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Tests and tools
+*.snap.new
+
+# Logs and system
+*.log
+.DS_Store
+Thumbs.db
+
+# IDEs and editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*~

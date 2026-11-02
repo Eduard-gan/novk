@@ -33,23 +33,22 @@ NOVK is a server-rendered music library and streaming service built with Rust an
 
 ### 1. Build and verify
 ```bash
-cargo check --manifest-path rs/Cargo.toml
+cargo check
 ```
 
 ### 2. Apply database migrations
-From repository root:
 ```bash
-cargo loco db migrate --manifest-path rs/Cargo.toml
+cargo loco db migrate
 ```
 
 ### 3. Create an initial user
 ```bash
-cargo loco task users.create email:admin@novk.local password:secretpassword name:Admin --manifest-path rs/Cargo.toml
+cargo loco task users.create email:admin@novk.local password:secretpassword name:Admin
 ```
 
 ### 4. Start local server
 ```bash
-cd rs && cargo loco start
+cargo loco start
 ```
 The application will listen on `http://127.0.0.1:8000`.
 

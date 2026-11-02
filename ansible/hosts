@@ -1,5 +1,0 @@
-[prod]
-178.157.90.143 ansible_ssh_user=root
-
-[local]
-localhost ansible_ssh_user=root
