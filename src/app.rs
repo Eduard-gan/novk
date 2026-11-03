@@ -11,6 +11,7 @@ use loco_rs::{
     Result,
 };
 use migration::Migrator;
+use sea_orm::{ConnectionTrait, DbBackend, Statement};
 use std::path::Path;
 
 #[allow(unused_imports)]
@@ -44,6 +45,11 @@ impl Hooks for App {
     }
 
     async fn after_context(ctx: AppContext) -> Result<AppContext> {
+        if ctx.db.get_database_backend() == DbBackend::Sqlite {
+            // Enable WAL mode and normal synchronization to allow concurrent reads alongside writes.
+            ctx.db.execute(Statement::from_string(DbBackend::Sqlite, "PRAGMA journal_mode = WAL;")).await?;
+            ctx.db.execute(Statement::from_string(DbBackend::Sqlite, "PRAGMA synchronous = NORMAL;")).await?;
+        }
         crate::cookies::name(&ctx.config)?;
         let settings = crate::settings::Settings::from_config(&ctx.config)?;
         settings.prepare_media()?;
